@@ -12,9 +12,9 @@
 
     <!-- Menu principal -->
     <nav :class="{ 'menu-mobile': menuAberto }">
-      <router-link to="/TelaAnuncios">Comprar</router-link>
-      <router-link to="/TelaMeusAnuncios">Vender</router-link>
-      <router-link to="/TelaFavoritos">Favoritos</router-link>
+      <router-link to="/anuncios">Comprar</router-link>
+      <router-link to="/criaranuncio">Vender</router-link>
+      <router-link to="/editaranuncio">Favoritos</router-link>
 
       <!-- Ícone do usuário dentro do menu hamburguer (Apenas no Mobile) -->
       <div v-if="mobileView && usuario" class="user-menu">
@@ -26,7 +26,7 @@
 
 
         <div v-if="dropdownAberto" class="dropdown-menu">
-          <router-link to="/TelaMeusAnuncios" class="dropdown-item">
+          <router-link to="/anuncios" class="dropdown-item">
             <i class="bi bi-house-door"></i> Meus Anúncios
           </router-link>
           <router-link to="/TelaMinhaConta" class="dropdown-item">
@@ -66,7 +66,6 @@
 </template>
 
 <script>
-import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 
 export default {
   name: "Navbar",
@@ -78,21 +77,7 @@ export default {
       mobileView: window.innerWidth <= 768,
     };
   },
-  created() {
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        this.usuario = user;
-      } else {
-        this.usuario = null;
-      }
-    });
-
-    window.addEventListener("resize", this.checkMobileView);
-  },
-  beforeUnmount() {
-    window.removeEventListener("resize", this.checkMobileView);
-  },
+  
   methods: {
     checkMobileView() {
       this.mobileView = window.innerWidth <= 768;

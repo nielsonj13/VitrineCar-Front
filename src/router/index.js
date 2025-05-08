@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import TelaPrincipal from '@/views/TelaPrincipal.vue';
 import TelaResultados from '@/views/TelaResultados.vue';
+import TelaAnuncios from '@/views/TelaAnuncios.vue';
+import TelaCriarAnuncios from '@/views/TelaCriarAnuncios.vue';
+import TelaEditarAnuncio from '@/views/TelaEditarAnuncios.vue';
+import TelaEditarAnuncios from '@/views/TelaEditarAnuncios.vue';
 
 // https://vitrinecar-71a27.web.app
 
@@ -16,6 +20,21 @@ const router = createRouter({
       path: '/resultados',
       name: 'TelaResultados',
       component: TelaResultados,
+    },
+    {
+      path: '/anuncios',
+      name: 'TelaAnuncios',
+      component: TelaAnuncios,
+    },
+    {
+      path: '/criaranuncio',
+      name: 'TelaCriarAnuncios',
+      component: TelaCriarAnuncios,
+    },
+    {
+      path: '/editaranuncio',
+      name: 'TelaEditarAnuncios',
+      component: TelaEditarAnuncios,
     },
 
   ],
