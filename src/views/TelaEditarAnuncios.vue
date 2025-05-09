@@ -1,13 +1,24 @@
 <template>
   <div>
     <Navbar />
-    
+
     <div class="container">
       <div class="content">
         <h2>Editar Anúncio</h2>
 
         <!-- Formulário de edição -->
         <form @submit.prevent="editarAnuncio" class="form-container">
+          <div class="form-group">
+            <label for="anuncioId">ID do Anúncio:</label>
+            <input
+              v-model="anuncioId"
+              type="number"
+              id="anuncioId"
+              placeholder="Digite o ID do anúncio"
+              required
+            />
+          </div>
+
           <div class="form-group">
             <label for="marca">Marca:</label>
             <input
@@ -103,7 +114,7 @@ export default {
   },
   data() {
     return {
-      anuncioId: this.$route.params.id,  // Obtém o ID do anúncio a ser editado
+      anuncioId: "",  // ID do anúncio será capturado aqui
       anuncio: {
         marca: "",
         modelo: "",
@@ -115,24 +126,33 @@ export default {
       },
     };
   },
-  async created() {
-    await this.carregarAnuncio();  // Carrega os dados do anúncio ao carregar a tela
-  },
   methods: {
-    // Função para carregar os dados do anúncio
+    // Função para carregar os dados do anúncio ao informar o ID
     async carregarAnuncio() {
+      if (!this.anuncioId) {
+        alert("Por favor, insira o ID do anúncio.");
+        return;
+      }
+
       try {
-        const response = await anuncioApi.get(`${this.anuncioId}`);
+        const response = await anuncioApi.get(`/${this.anuncioId}`);
         this.anuncio = response.data;  // Preenche os dados do anúncio no formulário
       } catch (error) {
         console.error('Erro ao carregar anúncio:', error);
+        alert("Erro ao carregar os dados do anúncio. Verifique o ID e tente novamente.");
       }
     },
 
     // Função para enviar os dados de edição para o backend
     async editarAnuncio() {
+      if (!this.anuncioId) {
+        alert("Por favor, insira o ID do anúncio.");
+        return;
+      }
+
       try {
-        const response = await anuncioApi.put(`${this.anuncioId}`, this.anuncio);
+        // Faz a requisição PUT para editar o anúncio
+        const response = await anuncioApi.put(`/${this.anuncioId}`, this.anuncio);
         alert("Anúncio editado com sucesso!");
         this.$router.push({ name: "TelaAnuncios" });
       } catch (error) {
@@ -145,7 +165,6 @@ export default {
 </script>
 
 <style scoped>
-/* Mesmo estilo da tela de criar anúncio */
 .container {
   max-width: 80%;
   margin: 0 auto;
