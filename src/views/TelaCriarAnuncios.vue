@@ -129,15 +129,19 @@
     methods: {
       async criarAnuncio() {
         try {
-          // Faz a requisição POST para criar o novo anúncio com o usuarioId
-          const response = await anuncioApi.post(`usuario/${this.usuarioId}`, this.anuncio);
-  
-          // Exibe mensagem de sucesso
+          // Certifique-se de que todos os campos estão preenchidos
+          if (!this.anuncio.marca || !this.anuncio.modelo || !this.anuncio.preco || !this.anuncio.anoFabricacao || !this.anuncio.anoModelo || !this.anuncio.descricao) {
+            alert("Por favor, preencha todos os campos.");
+            return;
+          }
+
+          // Envia os dados para a criação do anúncio
+          const response = await anuncioApi.post(`/usuario/${this.usuarioId}`, this.anuncio);
+          
+          // Sucesso na criação
           alert("Anúncio criado com sucesso!");
-  
-          // Redireciona para a tela de anúncios
           this.$router.push({ name: "TelaAnuncios" });
-  
+
         } catch (error) {
           console.error("Erro ao criar anúncio:", error);
           alert("Erro ao criar anúncio. Tente novamente.");

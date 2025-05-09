@@ -27,7 +27,7 @@
                   ></i>
                 </div>
                 <p>R$ {{ anuncio.preco }}</p>
-                <span>{{ anuncio.ano }}/{{ anuncio.ano }}</span>
+                <span>{{ anuncio.anoFabricacao}}/{{ anuncio.anoModelo }}</span>
               </div>
   
               <div class="card-actions">
