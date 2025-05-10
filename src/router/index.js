@@ -5,6 +5,7 @@ import TelaAnuncios from '@/views/TelaAnuncios.vue';
 import TelaCriarAnuncios from '@/views/TelaCriarAnuncios.vue';
 import TelaEditarAnuncios from '@/views/TelaEditarAnuncios.vue';
 import TelaMeusAnuncios from '@/views/TelaMeusAnuncios.vue';
+import TelaADM from '@/views/TelaADM.vue';
 
 // https://vitrinecar-71a27.web.app
 
@@ -41,6 +42,12 @@ const router = createRouter({
       name: 'TelaMeusAnuncios',
       component: TelaMeusAnuncios,
     },
+    {
+      path: '/adm',
+      name: 'TelaADM',
+      component: TelaADM,
+    },
+
 
   ],
 });
