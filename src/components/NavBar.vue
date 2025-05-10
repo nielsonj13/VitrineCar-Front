@@ -13,7 +13,7 @@
     <!-- Menu principal -->
     <nav :class="{ 'menu-mobile': menuAberto }">
       <router-link to="/anuncios">Comprar</router-link>
-      <router-link to="/criaranuncio">Vender</router-link>
+      <router-link to="/meusanuncio">Vender</router-link>
       <router-link to="/editaranuncio">Favoritos</router-link>
 
       <!-- Ícone do usuário dentro do menu hamburguer (Apenas no Mobile) -->

@@ -1,103 +1,47 @@
 <template>
   <div>
     <Navbar />
-
     <div class="container">
       <div class="content">
-        <h2>Editar Anúncio</h2>
+        <!-- Etapa 1: Pergunta o ID do Anúncio -->
+        <div v-if="!anuncioIdInformado">
+          <h2>Editar Anúncio</h2>
+          <label for="anuncioId">Informe o ID do Anúncio:</label>
+          <input 
+            type="number" 
+            v-model="anuncioId"
+            placeholder="ID do Anúncio"
+          />
+          <button @click="buscarAnuncio">Buscar Anúncio</button>
+        </div>
 
-        <!-- Formulário de edição -->
-        <form @submit.prevent="editarAnuncio" class="form-container">
-          <div class="form-group">
-            <label for="anuncioId">ID do Anúncio:</label>
-            <input
-              v-model="anuncioId"
-              type="number"
-              id="anuncioId"
-              placeholder="Digite o ID do anúncio"
-              required
-            />
-          </div>
+        <!-- Etapa 2: Formulário de Edição do Anúncio -->
+        <div v-if="anuncioIdInformado" class="edit-form">
+          <h2>Editar Anúncio - ID: {{ anuncio.id }}</h2>
+          
+          <label for="marca">Marca:</label>
+          <input v-model="anuncio.marca" type="text" id="marca" />
 
-          <div class="form-group">
-            <label for="marca">Marca:</label>
-            <input
-              v-model="anuncio.marca"
-              type="text"
-              id="marca"
-              placeholder="Digite a marca do veículo"
-              required
-            />
-          </div>
+          <label for="modelo">Modelo:</label>
+          <input v-model="anuncio.modelo" type="text" id="modelo" />
 
-          <div class="form-group">
-            <label for="modelo">Modelo:</label>
-            <input
-              v-model="anuncio.modelo"
-              type="text"
-              id="modelo"
-              placeholder="Digite o modelo do veículo"
-              required
-            />
-          </div>
+          <label for="preco">Preço:</label>
+          <input v-model="anuncio.preco" type="number" id="preco" />
 
-          <div class="form-group">
-            <label for="preco">Preço:</label>
-            <input
-              v-model="anuncio.preco"
-              type="number"
-              id="preco"
-              placeholder="Digite o preço do veículo"
-              required
-            />
-          </div>
+          <label for="anoFabricacao">Ano de Fabricação:</label>
+          <input v-model="anuncio.anoFabricacao" type="number" id="anoFabricacao" />
 
-          <div class="form-group">
-            <label for="anoFabricacao">Ano de Fabricação:</label>
-            <input
-              v-model="anuncio.anoFabricacao"
-              type="number"
-              id="anoFabricacao"
-              placeholder="Digite o ano de fabricação"
-              required
-            />
-          </div>
+          <label for="anoModelo">Ano do Modelo:</label>
+          <input v-model="anuncio.anoModelo" type="number" id="anoModelo" />
 
-          <div class="form-group">
-            <label for="anoModelo">Ano do Modelo:</label>
-            <input
-              v-model="anuncio.anoModelo"
-              type="number"
-              id="anoModelo"
-              placeholder="Digite o ano do modelo"
-              required
-            />
-          </div>
+          <label for="descricao">Descrição:</label>
+          <textarea v-model="anuncio.descricao" id="descricao"></textarea>
 
-          <div class="form-group">
-            <label for="descricao">Descrição:</label>
-            <textarea
-              v-model="anuncio.descricao"
-              id="descricao"
-              placeholder="Digite a descrição do veículo"
-              required
-            ></textarea>
-          </div>
+          <label for="imagens">Imagem:</label>
+          <input v-model="anuncio.imagens" type="text" id="imagens" />
 
-          <div class="form-group">
-            <label for="imagem">Imagem:</label>
-            <input
-              v-model="anuncio.imagens"
-              type="text"
-              id="imagem"
-              placeholder="URL da imagem do veículo"
-            />
-          </div>
-
-          <div class="form-actions">
-            <button type="submit" class="btn-submit">Salvar Alterações</button>
-          </div>
-        </form>
+          <button @click="salvarAlteracoes">Salvar Alterações</button>
+        </div>
       </div>
     </div>
   </div>
@@ -114,57 +58,48 @@ export default {
   },
   data() {
     return {
-      anuncioId: "",  // ID do anúncio será capturado aqui
-      anuncio: {
-        marca: "",
-        modelo: "",
-        preco: "",
-        anoFabricacao: "",
-        anoModelo: "",
-        descricao: "",
-        imagens: "",
-      },
+      anuncioId: "",  // ID do anúncio fornecido pelo usuário
+      anuncio: {},  // Detalhes do anúncio que será editado
+      anuncioIdInformado: false,  // Flag para saber se o ID foi informado
     };
   },
   methods: {
-    // Função para carregar os dados do anúncio ao informar o ID
-    async carregarAnuncio() {
+    // Etapa 1: Buscar o Anúncio com o ID informado
+    async buscarAnuncio() {
       if (!this.anuncioId) {
-        alert("Por favor, insira o ID do anúncio.");
+        alert("Por favor, informe o ID do anúncio.");
         return;
       }
 
       try {
+        // Faz a requisição para buscar os dados do anúncio
         const response = await anuncioApi.get(`/${this.anuncioId}`);
-        this.anuncio = response.data;  // Preenche os dados do anúncio no formulário
+        this.anuncio = response.data;  // Preenche as informações do anúncio no formulário
+        this.anuncioIdInformado = true;  // Marca o ID como informado, permitindo exibir os dados
       } catch (error) {
-        console.error('Erro ao carregar anúncio:', error);
-        alert("Erro ao carregar os dados do anúncio. Verifique o ID e tente novamente.");
+        console.error("Erro ao buscar o anúncio:", error);
+        alert("Erro ao carregar o anúncio. Tente novamente.");
       }
     },
 
-    // Função para enviar os dados de edição para o backend
-    async editarAnuncio() {
-      if (!this.anuncioId) {
-        alert("Por favor, insira o ID do anúncio.");
-        return;
-      }
-
+    // Etapa 2: Salvar as alterações feitas no anúncio
+    async salvarAlteracoes() {
       try {
-        // Faz a requisição PUT para editar o anúncio
-        const response = await anuncioApi.put(`/${this.anuncioId}`, this.anuncio);
+        // Faz a requisição para atualizar o anúncio
+        await anuncioApi.put(`/${this.anuncioId}`, this.anuncio);
         alert("Anúncio editado com sucesso!");
         this.$router.push({ name: "TelaAnuncios" });
       } catch (error) {
-        console.error("Erro ao editar anúncio:", error);
-        alert("Erro ao editar anúncio. Tente novamente.");
+        console.error("Erro ao editar o anúncio:", error);
+        alert("Erro ao editar o anúncio. Tente novamente.");
       }
-    },
+    }
   },
 };
 </script>
 
 <style scoped>
+/* Estilo similar ao da tela de anúncios */
 .container {
   max-width: 80%;
   margin: 0 auto;
@@ -180,58 +115,33 @@ h2 {
   margin-bottom: 20px;
 }
 
-.form-container {
+.edit-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.edit-form input,
+.edit-form textarea {
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-size: 16px;
-  margin-bottom: 5px;
-  color: #333;
-}
-
-.form-group input,
-.form-group textarea {
   padding: 10px;
-  font-size: 14px;
   border-radius: 5px;
   border: 1px solid #ccc;
+  margin-bottom: 10px;
 }
 
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-actions {
-  text-align: center;
-}
-
-.btn-submit {
+.edit-form button {
   background-color: #5b3199;
   color: white;
-  padding: 15px 30px;
+  padding: 12px 20px;
   font-size: 16px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
 }
 
-.btn-submit:hover {
-  background-color: #431f7a;
+.edit-form button:hover {
+  background-color: #4a1c6e;
 }
 </style>
