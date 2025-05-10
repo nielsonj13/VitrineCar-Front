@@ -116,6 +116,24 @@ export default {
         console.error("Erro ao carregar dados:", error);
       }
     },
+
+    // Métodos CRUD de Anúncios
+    async criarUsuario() {
+      this.$router.push({ name: "TelaCriarUsuario" });
+    },
+
+    async editarUsuario(id) {
+      this.$router.push({ name: "TelaEditarUsuario", params: { id } });
+    },
+
+    async excluirUsuario(id) {
+      try {
+        await usuarioApi.delete(`/${id}`);
+        this.carregarDados(); // Recarrega os dados após a exclusão
+      } catch (error) {
+        console.error("Erro ao excluir o usuario:", error);
+      }
+    },
     
     // Métodos CRUD de Anúncios
     async criarAnuncio() {
