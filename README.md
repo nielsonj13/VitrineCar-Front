@@ -1,28 +1,28 @@
 # VitrineVUEJS
 
-This template should help get you started developing with Vue 3 in Vite.
+Este modelo deve ajudar você a começar a desenvolver com Vue 3 no Vite.
 
-## Recommended IDE Setup
+## Configuração de IDE recomendada
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (e desabilite o Vetur).
 
-## Customize configuration
+## Personalizar configuração
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+Consulte [Referência de Configuração do Vite](https://vite.dev/config/).
 
-## Project Setup
+## Configuração do Projeto
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### Compilar e Recarregar a Quente para Desenvolvimento
 
 ```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+### Compilar e Minificar para Produção
 
 ```sh
 npm run build
