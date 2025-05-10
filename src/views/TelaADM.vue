@@ -159,7 +159,6 @@ export default {
 <style scoped>
 .admin-dashboard {
   padding: 40px;
-  background-color: #f4f6f9;
 }
 
 .dashboard-header {
@@ -175,7 +174,7 @@ export default {
 }
 
 .stat-box {
-  background-color: #fff;
+
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.1);
