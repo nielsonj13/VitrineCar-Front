@@ -61,7 +61,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi } from "../Services/http.js";  // Importando a instância do Axios configurada para anúncios
+import { anuncioApi, usuarioApi } from "../Services/http.js";  // Importando as instâncias do Axios configuradas
 
 export default {
   name: "TelaMeusAnuncios",
@@ -84,17 +84,20 @@ export default {
       }
 
       try {
-        // Faz a requisição para buscar os anúncios do usuário com o ID informado
-        const response = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        // Primeiro, verificamos se o usuário existe (usando `buscarUsuarioPorId`)
+        const usuarioResponse = await usuarioApi.get(`/${this.usuarioId}`);
         
-        // Verifica se a resposta não contém dados
-        if (response.data.length === 0) {
-          alert("Não existe usuário cadastrado com esse ID.");
-        } else {
-          this.anuncios = response.data;  // Preenche a lista com os anúncios do usuário
-          this.usuarioIdInformado = true;  // Marca o ID como informado, permitindo exibir os anúncios
+        // Se o usuário não for encontrado, exibe uma mensagem de erro
+        if (!usuarioResponse.data) {
+          alert("Usuário não encontrado.");
+          return;
         }
-        
+
+        // Depois, obtemos os anúncios do usuário (usando `listarAnunciosPorUsuario`)
+        const anunciosResponse = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        this.anuncios = anunciosResponse.data;  // Preenche a lista com os anúncios do usuário
+
+        this.usuarioIdInformado = true;  // Marca o ID como informado, permitindo exibir os anúncios
       } catch (error) {
         console.error("Erro ao buscar meus anúncios:", error);
         alert("Erro ao buscar anúncios. Tente novamente.");
