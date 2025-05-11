@@ -41,7 +41,7 @@
             </div>
 
             <div class="card-actions">
-              <button class="btn-ver" @click="verAnuncio(anuncio.id)">Ver anúncio</button>
+              <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
               <button class="btn-vendido" @click="marcarComoVendido(anuncio)">Marcar como Vendido</button>
               <button class="btn-editar" @click="editarAnuncio(anuncio.id)">Editar anúncio</button>
               <button class="btn-excluir" @click="excluirAnuncio(anuncio.id)">Excluir anúncio</button>
@@ -124,8 +124,12 @@ export default {
     },
 
     // Função para visualizar o anúncio
-    verAnuncio(id) {
-      this.$router.push({ name: "TelaDetalhesAnuncio", params: { id: id } });  // Redireciona para a tela de detalhes do anúncio
+    verAnuncio(anuncio) {
+      // Passando os dados do anúncio para a TelaVeiculo
+      this.$router.push({ 
+        name: "TelaVeiculo", 
+        params: { id: anuncio.id, usuarioId: this.usuarioId }
+      });  // Redireciona para a TelaVeiculo com os parâmetros necessários
     },
 
     // Função para marcar o anúncio como vendido
@@ -159,6 +163,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 /* Estilo similar ao da tela de anúncios */

@@ -1,0 +1,65 @@
+[33mcommit 39475f388f3d087caaa04cb8534942838f4da3bf[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: FlavioWallefy1 <fwso@discente.ifpe.edu.br>
+Date:   Sun May 11 13:27:27 2025 -0300
+
+    Criação da tela de login e campo de busca Criar Usuario Funcionando
+
+[33mcommit 1de9c6bd0507918742f151455720fca292b84590[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Nielson Junior <111090814+nielsonj13@users.noreply.github.com>
+Date:   Sat May 10 13:17:45 2025 -0300
+
+    Update README.md
+
+[33mcommit 5d5fbd3340bee71310e8ff7b7851895de45de042[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Sat May 10 13:10:24 2025 -0300
+
+    Correção de erro
+
+[33mcommit e42c0b0a680f5ca5fe04c9b728a2f8b483ce955f[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Sat May 10 12:52:55 2025 -0300
+
+    correção na logica de listar usuarios e anuncios
+
+[33mcommit 743eb97c2867933558cdfbe78400375ba9b294d5[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Sat May 10 10:25:57 2025 -0300
+
+    Correção de erros, implementação das funcionalidade CRUD de usuario
+
+[33mcommit 5eced7a89a2c3709e5255d02750721a07a2d6a32[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Sat May 10 09:41:28 2025 -0300
+
+    Implementação do adm
+
+[33mcommit 9ad7e4cc2a52a72c831b9b0be2dc6f9472702a8e[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Sat May 10 08:29:24 2025 -0300
+
+    Correção no editar e ajustes no sistema
+
+[33mcommit dfdb0a710fcd840b4b655e145a8416f24df1aa0e[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Fri May 9 17:13:27 2025 -0300
+
+    Conserto de erros
+
+[33mcommit 045677a3b93e024d9ac113c50bddbfa002ebbc90[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Fri May 9 15:28:18 2025 -0300
+
+    implementação do editar anuncio
+
+[33mcommit e0ce7b0007c681ed014ed769e5586d6f8c5ac8f2[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Thu May 8 20:31:43 2025 -0300
+
+    Integração do back com front, listar e criar anuncios funcioando, o editar aidna não esta pronto
+
+[33mcommit d8c796190fa0dd5e2888f0c995f5170772352b6e[m
+Author: nielsonj13 <nielsoncorinthiano@gmail.com>
+Date:   Wed May 7 21:12:41 2025 -0300
+
+    Teste de funcionalidade
