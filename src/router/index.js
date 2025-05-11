@@ -8,6 +8,8 @@ import TelaMeusAnuncios from '@/views/TelaMeusAnuncios.vue';
 import TelaADM from '@/views/TelaADM.vue';
 import TelaCriarUsuario from '@/views/TelaCriarUsuario.vue';
 import TelaEditarUsuario from '@/views/TelaEditarUsuario.vue';
+import TelaLogin from '@/views/TelaLogin.vue';
+import TelaVeiculo from '@/views/TelaVeiculo.vue';
 
 // https://vitrinecar-71a27.web.app
 
@@ -58,6 +60,16 @@ const router = createRouter({
       path: '/editarusuario',
       name: 'TelaEditarUsuario',
       component: TelaEditarUsuario,
+    },
+     {
+      path: '/login',
+      name: 'TelaLogin',
+      component: TelaLogin,
+    },
+    {
+      path: '/veiculo/:id',
+      name: 'TelaVeiculo',
+      component: TelaVeiculo,
     },
 
 
