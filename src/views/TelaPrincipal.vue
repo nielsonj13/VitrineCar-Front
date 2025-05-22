@@ -47,6 +47,7 @@
           </div>
         </div>
       </div>
+      <button @click="logout">Sair</button>
     </div>
   </div>
 </template>
@@ -79,6 +80,12 @@ export default {
     };
   },
   methods: {
+
+    logout() {
+      sessionStorage.removeItem("authToken");
+      this.$router.push({ name: "Login" });
+    },
+    
     async buscarAnuncios(termo) {
   try {
     if (!termo.trim()) {

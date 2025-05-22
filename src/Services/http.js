@@ -16,4 +16,18 @@ const anuncioApi = axios.create({
   },
 });
 
+// Interceptor para adicionar o header Authorization em todas as requisições
+const addAuthInterceptor = (apiInstance) => {
+  apiInstance.interceptors.request.use(config => {
+    const token = sessionStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Basic ${token}`;
+    }
+    return config;
+  });
+};
+
+addAuthInterceptor(usuarioApi);
+addAuthInterceptor(anuncioApi);
+
 export { usuarioApi, anuncioApi };

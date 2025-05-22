@@ -31,6 +31,7 @@ const router = createRouter({
       path: '/anuncios',
       name: 'TelaAnuncios',
       component: TelaAnuncios,
+      meta: { requiresAuth: true },
     },
     {
       path: '/criaranuncio',
