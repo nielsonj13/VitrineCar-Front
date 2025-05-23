@@ -21,18 +21,19 @@
           <i class="bi bi-chevron-right"></i>
         </button>
 
-        <!-- Miniaturas com rolagem dinâmica -->
+        <!-- Miniaturas com rolagem dinâmica limitada -->
         <div class="miniaturas-container">
           <div class="miniaturas">
             <img 
-              v-for="(imagem, index) in anuncio.imagens" 
-              :key="'thumb-' + index"
+              v-for="(imagem, index) in anuncio.imagens.slice(miniaturaInicio, miniaturaInicio + 4)" 
+              :key="'thumb-' + (miniaturaInicio + index)"
               :src="imagem" 
               class="miniatura img-thumbnail" 
-              @click="selecionarImagem(index)" 
-              :class="{ active: index === imagemSelecionada }"
+              @click="selecionarImagem(miniaturaInicio + index)" 
+              :class="{ active: (miniaturaInicio + index) === imagemSelecionada }"
               @error="imagemErro($event)" 
-              alt="Miniatura do veículo">
+              alt="Miniatura do veículo"
+            >
           </div>
         </div>
       </div>
@@ -103,6 +104,7 @@ export default {
     return {
       anuncio: null,
       imagemSelecionada: 0,
+      miniaturaInicio: 0,
       telaCheiaAtiva: false,
     };
   },
@@ -117,6 +119,12 @@ export default {
   created() {
     const anuncioId = this.$route.params.id;
     this.buscarAnuncio(anuncioId);
+  },
+  mounted() {
+    document.addEventListener("keydown", this.tecladoNavegacao);
+  },
+  beforeUnmount() {
+    document.removeEventListener("keydown", this.tecladoNavegacao);
   },
   methods: {
     async buscarAnuncio(id) {
@@ -135,16 +143,30 @@ export default {
 
     selecionarImagem(index) {
       this.imagemSelecionada = index;
+      this.atualizarMiniaturas();
     },
-
     proximaImagem() {
-      if (!this.anuncio || !this.anuncio.imagens) return;
-      this.imagemSelecionada = (this.imagemSelecionada + 1) % this.anuncio.imagens.length;
+      if (this.imagemSelecionada < this.anuncio.imagens.length - 1) {
+        this.imagemSelecionada++;
+      } else {
+        this.imagemSelecionada = 0;
+      }
+      this.atualizarMiniaturas();
     },
-
     anteriorImagem() {
-      if (!this.anuncio || !this.anuncio.imagens) return;
-      this.imagemSelecionada = (this.imagemSelecionada - 1 + this.anuncio.imagens.length) % this.anuncio.imagens.length;
+      if (this.imagemSelecionada > 0) {
+        this.imagemSelecionada--;
+      } else {
+        this.imagemSelecionada = this.anuncio.imagens.length - 1;
+      }
+      this.atualizarMiniaturas();
+    },
+    atualizarMiniaturas() {
+      if (this.imagemSelecionada < this.miniaturaInicio) {
+        this.miniaturaInicio = this.imagemSelecionada;
+      } else if (this.imagemSelecionada >= this.miniaturaInicio + 4) {
+        this.miniaturaInicio = this.imagemSelecionada - 3;
+      }
     },
 
     abrirTelaCheia() {
@@ -163,9 +185,18 @@ export default {
       }
     },
 
+    tecladoNavegacao(event) {
+      if (event.key === "ArrowRight") {
+        this.proximaImagem();
+      } else if (event.key === "ArrowLeft") {
+        this.anteriorImagem();
+      } else if (event.key === "Escape") {
+        this.fecharTelaCheia();
+      }
+    },
+
     toggleFavorito() {
       alert("Função para favoritar ainda não implementada.");
-      // Aqui você pode implementar a lógica para favoritar/desfavoritar
     }
   },
 };
@@ -177,13 +208,52 @@ export default {
   margin: 0 auto;
   padding: 20px;
 }
-
-.loading {
-  text-align: center;
-  font-size: 22px;
-  color: #5b3199;
-  padding: 50px 0;
+.modal-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
+
+.fullscreen-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 30px;
+  background: none;
+  font-size: 30px;
+  color: #5b3199;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  z-index: 10000;
+}
+
+.modal-prev, .modal-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 50px;
+  padding: 10px;
+  color: #5b3199;
+  cursor: pointer;
+  z-index: 10000;
+}
+
+.modal-prev { left: 20px; }
+.modal-next { right: 20px; }
 
 .carrossel-container {
   display: flex;
@@ -191,53 +261,42 @@ export default {
   justify-content: center;
   gap: 20px;
   position: relative;
-  margin-bottom: 30px;
 }
 
-.imagem-principal {
+.imagem-principal img {
   width: 600px;
   height: 400px;
-}
-
-.main-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 15px;
+  border-radius: 10px;
   object-fit: cover;
-  cursor: pointer;
   transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+  margin-bottom: 10px;
 }
 
-.main-image:hover {
+.imagem-principal img:hover {
   transform: scale(1.03);
 }
 
 .nav-button {
-  background: none;
   border: none;
+  color: white;
   font-size: 30px;
-  color: #5b3199;
   cursor: pointer;
   padding: 10px;
   border-radius: 50%;
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
   z-index: 10;
-  user-select: none;
 }
 
 .left {
-  left: -50px;
+  left: -40px;
 }
 
 .right {
-  right: -50px;
+  right: -40px;
 }
 
-.miniaturas-container {
-  max-width: 120px;
-}
+
 
 .miniaturas {
   display: flex;
@@ -249,80 +308,37 @@ export default {
   width: 100px;
   height: 80px;
   object-fit: cover;
-  border-radius: 10px;
+  border-radius: 5px;
   cursor: pointer;
   transition: transform 0.3s, border 0.3s;
-  border: 2px solid transparent;
 }
 
-.miniatura:hover, .miniatura.active {
+.miniatura:hover,
+.miniatura.active {
   transform: scale(1.1);
   border-color: #5b3199;
 }
 
-.modal-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-
-.fullscreen-image {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 30px;
-  background: none;
-  font-size: 40px;
-  color: #5b3199;
-  border: none;
-  cursor: pointer;
-  z-index: 10001;
-}
-
-.modal-prev, .modal-next {
-  position: absolute;
-  top: 50%;
-  background: none;
-  border: none;
-  font-size: 60px;
-  color: #5b3199;
-  cursor: pointer;
-  padding: 10px;
-  user-select: none;
-  z-index: 10001;
-  transform: translateY(-50%);
-}
-
-.modal-prev {
-  left: 20px;
-}
-
-.modal-next {
-  right: 20px;
-}
-
 .vehicle-info {
+  display: flex;
+  flex-direction: column;
   background: #fdf9f9;
   padding: 30px;
   border-radius: 15px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  gap: 10px;
+}
+
+.info-wrapper {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 900px;
-  margin: 0 auto 40px;
+  gap: 40px;
+}
+
+.info-section {
+  flex: 1;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 10px;
 }
 
 .price-title {
@@ -372,63 +388,74 @@ export default {
   color: #7c42c2;
 }
 
-.info-wrapper {
-  display: flex;
-  gap: 40px;
-  flex-wrap: wrap;
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
-.info-section {
-  flex: 1 1 300px;
+.seller-name {
+  font-size: 45px;
+  font-weight: bold;
+  color: #5b3199;
+}
+
+.contact-info p {
+  font-size: 21px;
+  display: block;
+}
+
+i {
+  color: #5b3199;
+}
+
+.descricao-container {
+  margin-top: 15px;
   background: #f9f9f9;
-  padding: 20px;
+  padding: 10px;
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  text-align: justify;
 }
 
-.info-section h4 {
-  margin-bottom: 15px;
+.descricao-btn {
+  background: none;
+  border: none;
   color: #5b3199;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 5px;
+  font-weight: bold;
 }
 
-.info-grid p {
-  margin: 8px 0;
-  font-size: 18px;
+.descricao-btn:hover {
+  text-decoration: underline;
 }
 
-.info-grid i {
-  margin-right: 8px;
-  color: #5b3199;
-}
-
-/* Responsividade */
 @media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .nav-button {
+    display: none !important;
+  }
   .carrossel-container {
     flex-direction: column;
   }
 
-  .imagem-principal {
+  .imagem-principal img {
     width: 100%;
     height: auto;
-  }
-
-  .nav-button {
-    display: none;
   }
 
   .miniaturas {
     flex-direction: row;
     justify-content: center;
-    gap: 8px;
   }
 
   .miniatura {
-    width: 60px;
-    height: 50px;
-  }
-
-  .vehicle-info {
-    padding: 20px 15px;
+    width: 80px;
+    height: 60px;
   }
 
   .price-title {
@@ -447,8 +474,6 @@ export default {
 
   .favorite-icon {
     font-size: 30px;
-    margin-left: 10px;
-    top: -5px;
   }
 
   .info-wrapper {
@@ -456,9 +481,17 @@ export default {
     gap: 20px;
   }
 
-  .info-section {
-    box-shadow: none;
-    padding: 15px 10px;
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .seller-name {
+    font-size: 24px;
+  }
+
+  .contact-info p {
+    font-size: 18px;
+    display: block;
   }
 }
 </style>
