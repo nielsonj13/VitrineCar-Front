@@ -68,9 +68,25 @@
             <h4>Informações do Veículo</h4>
             <div class="info-grid">
               <p><i class="bi bi-calendar"></i> <strong>Ano:</strong> {{ anuncio.anoModelo }}/{{ anuncio.anoFabricacao }}</p>
-              <p><strong>Título:</strong> {{ anuncio.titulo }}</p>
-              <p><i class="bi bi-card-text"></i> <strong>Descrição:</strong> {{ anuncio.descricao || 'Sem descrição disponível' }}</p>
+              <p><i class="bi bi-palette"></i> <strong>Cor:</strong> {{ anuncio.cor || 'Não informado' }}</p>
+              <p><i class="bi bi-speedometer2"></i> <strong>Km Rodado:</strong> {{ anuncio.km || 'Não informado' }}</p>
+              <p><i class="bi bi-gear"></i> <strong>Câmbio:</strong> {{ anuncio.cambio || 'Não informado' }}</p>
+              <p><i class="bi bi-fuel-pump"></i> <strong>Combustível:</strong> {{ anuncio.combustivel || 'Não informado' }}</p>
+              <p><i class="bi bi-car-front"></i> <strong>Categoria:</strong> {{ anuncio.categoria || 'Não informado' }}</p>
             </div>
+            <p class="options"><strong>Opcionais:</strong> {{ anuncio.opcionais?.length ? anuncio.opcionais.join(', ') : 'Nenhum' }}</p>
+            
+            <p class="descricao">
+              <strong>Descrição:</strong> 
+              {{ verDescricao ? (anuncio.descricao || 'Sem descrição disponível.') : (anuncio.descricao ? anuncio.descricao.slice(0, 100) + '...' : 'Sem descrição disponível.') }}
+            </p>
+            <button 
+              v-if="anuncio.descricao && anuncio.descricao.length > 100" 
+              @click="verDescricao = !verDescricao" 
+              class="descricao-btn"
+            >
+              {{ verDescricao ? "Ocultar descrição" : "Ver descrição" }}
+            </button>
           </div>
 
           <!-- Informações do Usuário -->
@@ -106,6 +122,7 @@ export default {
       imagemSelecionada: 0,
       miniaturaInicio: 0,
       telaCheiaAtiva: false,
+      verDescricao: false,
     };
   },
   computed: {
