@@ -16,10 +16,18 @@
         </div>
       </div>
 
+      <!-- Controle de Abas -->
+      <div class="tabs">
+        <button :class="{ active: abaAtiva === 'usuarios' }" @click="abaAtiva = 'usuarios'">Usuários</button>
+        <button :class="{ active: abaAtiva === 'anuncios' }" @click="abaAtiva = 'anuncios'">Anúncios</button>
+      </div>
+
       <div class="tables">
         <!-- Tabela de Usuários -->
-        <div class="table-container">
+        <div v-show="abaAtiva === 'usuarios'" class="table-container">
           <h3>Usuários</h3>
+          <input type="text" v-model="buscaUsuario" placeholder="Buscar por nome ou email..." class="input-busca" />
+
           <table>
             <thead>
               <tr>
@@ -30,23 +38,24 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="usuario in usuarios" :key="usuario.id">
+              <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
                 <td>{{ usuario.id }}</td>
                 <td>{{ usuario.nome }}</td>
                 <td>{{ usuario.email }}</td>
                 <td>
-                  <button @click="editarUsuario(usuario.id)">Editar</button>
-                  <button @click="excluirUsuario(usuario.id)">Excluir</button>
+                  <button class="btn-editar" @click="editarUsuario(usuario.id)">Editar</button>
+                  <button  class="btn-excluir" @click="confirmarExclusaoUsuario(usuario.id)">Excluir</button>
                 </td>
               </tr>
             </tbody>
           </table>
-          <button class="btn-add" @click="criarUsuario">Criar Novo Usuário</button>
         </div>
 
         <!-- Tabela de Anúncios -->
-        <div class="table-container">
+        <div v-show="abaAtiva === 'anuncios'" class="table-container">
           <h3>Anúncios</h3>
+          <input type="text" v-model="buscaAnuncio" placeholder="Buscar por marca ou modelo..." class="input-busca" />
+
           <table>
             <thead>
               <tr>
@@ -54,25 +63,24 @@
                 <th>Marca</th>
                 <th>Modelo</th>
                 <th>Preço</th>
-                <th>ID do Usuário</th> <!-- Coluna ID do Usuário -->
+                <th>ID do Usuário</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="anuncio in anuncios" :key="anuncio.id">
+              <tr v-for="anuncio in anunciosFiltrados" :key="anuncio.id">
                 <td>{{ anuncio.id }}</td>
                 <td>{{ anuncio.marca }}</td>
                 <td>{{ anuncio.modelo }}</td>
                 <td>R$ {{ anuncio.preco }}</td>
-                <td>{{ anuncio.usuario.id }}</td> <!-- Exibe o ID do Usuário -->
+                <td>{{ anuncio.usuario.id }}</td>
                 <td>
-                  <button @click="editarAnuncio(anuncio.id)">Editar</button>
-                  <button @click="excluirAnuncio(anuncio.id)">Excluir</button>
+                  <button class="btn-editar" @click="editarAnuncio(anuncio.id)">Editar</button>
+                  <button  class="btn-excluir" @click="confirmarExclusaoAnuncio(anuncio.id)">Excluir</button>
                 </td>
               </tr>
             </tbody>
           </table>
-          <button class="btn-add" @click="criarAnuncio">Criar Novo Anúncio</button>
         </div>
       </div>
     </div>
@@ -81,7 +89,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { usuarioApi, anuncioApi } from "../Services/http.js"; // Instâncias do Axios configuradas
+import { usuarioApi, anuncioApi } from "../Services/http.js";
 
 export default {
   name: "TelaAdmin",
@@ -90,25 +98,41 @@ export default {
   },
   data() {
     return {
-      usuarios: [],   // Lista de usuários
-      anuncios: [],   // Lista de anúncios
-      totalUsuarios: 0, // Contador total de usuários
-      totalAnuncios: 0, // Contador total de anúncios
+      usuarios: [],
+      anuncios: [],
+      totalUsuarios: 0,
+      totalAnuncios: 0,
+      abaAtiva: 'usuarios',
+      buscaUsuario: '',
+      buscaAnuncio: '',
     };
+  },
+  computed: {
+    usuariosFiltrados() {
+      const termo = this.buscaUsuario.toLowerCase();
+      return this.usuarios.filter(usuario =>
+        usuario.nome.toLowerCase().includes(termo) ||
+        usuario.email.toLowerCase().includes(termo)
+      );
+    },
+    anunciosFiltrados() {
+      const termo = this.buscaAnuncio.toLowerCase();
+      return this.anuncios.filter(anuncio =>
+        anuncio.marca.toLowerCase().includes(termo) ||
+        anuncio.modelo.toLowerCase().includes(termo)
+      );
+    },
   },
   created() {
     this.carregarDados();
   },
   methods: {
-    // Método para carregar dados iniciais
     async carregarDados() {
       try {
-        // Carregar usuários
         const usuariosResponse = await usuarioApi.get('');
         this.usuarios = usuariosResponse.data;
         this.totalUsuarios = this.usuarios.length;
 
-        // Carregar anúncios
         const anunciosResponse = await anuncioApi.get('');
         this.anuncios = anunciosResponse.data;
         this.totalAnuncios = this.anuncios.length;
@@ -117,9 +141,18 @@ export default {
       }
     },
 
-    // Métodos CRUD de Anúncios
-    async criarUsuario() {
-      this.$router.push({ name: "TelaCriarUsuario" });
+    async confirmarExclusaoUsuario(id) {
+      const confirmacao = window.confirm('Tem certeza que deseja excluir este usuário?');
+      if (confirmacao) {
+        this.excluirUsuario(id);
+      }
+    },
+    
+    async confirmarExclusaoAnuncio(id) {
+      const confirmacao = window.confirm('Tem certeza que deseja excluir este anúncio?');
+      if (confirmacao) {
+        this.excluirAnuncio(id);
+      }
     },
 
     async editarUsuario(id) {
@@ -129,15 +162,10 @@ export default {
     async excluirUsuario(id) {
       try {
         await usuarioApi.delete(`/${id}`);
-        this.carregarDados(); // Recarrega os dados após a exclusão
+        this.carregarDados();
       } catch (error) {
-        console.error("Erro ao excluir o usuario:", error);
+        console.error("Erro ao excluir o usuário:", error);
       }
-    },
-    
-    // Métodos CRUD de Anúncios
-    async criarAnuncio() {
-      this.$router.push({ name: "TelaCriarAnuncios" });
     },
 
     async editarAnuncio(id) {
@@ -147,7 +175,7 @@ export default {
     async excluirAnuncio(id) {
       try {
         await anuncioApi.delete(`/${id}`);
-        this.carregarDados(); // Recarrega os dados após a exclusão
+        this.carregarDados();
       } catch (error) {
         console.error("Erro ao excluir o anúncio:", error);
       }
@@ -157,6 +185,15 @@ export default {
 </script>
 
 <style scoped>
+/* Estilo da busca */
+.input-busca {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
 .admin-dashboard {
   padding: 40px;
 }
@@ -174,7 +211,6 @@ export default {
 }
 
 .stat-box {
-
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.1);
@@ -197,8 +233,28 @@ export default {
   font-size: 14px;
 }
 
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tabs button.active {
+  background-color: #5b3199;
+  color: white;
+}
+
 .tables {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .table-container {
@@ -206,7 +262,6 @@ export default {
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
 }
 
 table {
@@ -246,13 +301,29 @@ button:hover {
 .btn-add {
   background-color: #28a745;
   margin-top: 20px;
-  text-align: center;
-  padding: 10px 20px;
 }
 
 .btn-add:hover {
   background-color: #218838;
 }
+
+.btn-excluir {
+  background-color: #dc3545;
+}
+
+.btn-excluir:hover {
+  background-color: #c82333;
+}
+
+.btn-editar {
+  background-color: #ffc107;
+  color: #212529; /* texto escuro para melhor contraste */
+}
+
+.btn-editar:hover {
+  background-color: #e0a800;
+}
+
 
 table tr td button {
   margin-right: 5px;
