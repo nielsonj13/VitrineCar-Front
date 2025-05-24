@@ -172,7 +172,7 @@
         </div>
       </div>
 
-       <!-- Etapa 2: Opcionais -->
+      <!-- Etapa 2: Opcionais -->
       <div v-else-if="etapa === 2" class="content">
         <h3>Informe os opcionais do veículo</h3>
         <div class="opcionais">
@@ -274,7 +274,19 @@ export default {
         "Tração 4X4",
         "Desembaçador Traseiro",
       ],
+      diasParaLiberar: 0,
+      anunciosRestantes: 5,
     };
+  },
+  watch: {
+    usuarioId(novoId) {
+      if (novoId) {
+        this.atualizarStatusLimite();
+      } else {
+        this.diasParaLiberar = 0;
+        this.anunciosRestantes = 5;
+      }
+    },
   },
   methods: {
     validarAno(campo) {
@@ -312,7 +324,6 @@ export default {
     },
     avancarEtapa() {
       if (this.etapa === 1) {
-        // Validação dos campos da etapa 1 (como antes)
         const camposObrigatorios = [
           "usuarioId",
           "tipoVeiculo",
@@ -360,77 +371,122 @@ export default {
     },
     formatarKm() {
       if (!this.anuncio.km) {
-        this.anuncio.km = ""; // Se estiver vazio, mantém vazio
+        this.anuncio.km = "";
         return;
       }
 
-      // Remove caracteres não numéricos
       let numeroLimpo = this.anuncio.km.replace(/\D/g, "");
-
-      // Se não houver número válido, define o campo como vazio
       if (!numeroLimpo) {
         this.anuncio.km = "";
         return;
       }
 
-      // Formata o número corretamente
       this.anuncio.km = new Intl.NumberFormat("pt-BR").format(parseInt(numeroLimpo, 10));
     },
+    async atualizarStatusLimite() {
+      try {
+        // Busca quantos anúncios o usuário criou nos últimos 30 dias
+        const countResp = await anuncioApi.get(`/usuario/${this.usuarioId}/count`);
+        const totalRecentes = countResp.data;
+
+        // Busca todos os anúncios do usuário para achar o mais antigo dentro da janela
+        const anunciosResp = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        const anuncios = anunciosResp.data;
+
+        if (totalRecentes < 5) {
+          this.diasParaLiberar = 0;
+          this.anunciosRestantes = 5 - totalRecentes;
+          return;
+        }
+
+        const dataLimite = new Date();
+        dataLimite.setDate(dataLimite.getDate() - 30);
+
+        const anunciosRecentes = anuncios.filter(anuncio => {
+          const dataCriacao = new Date(anuncio.dataCriacao);
+          return dataCriacao >= dataLimite;
+        });
+
+        const maisAntigo = anunciosRecentes.reduce((min, anuncio) => {
+          const dataCriacao = new Date(anuncio.dataCriacao);
+          return dataCriacao < min ? dataCriacao : min;
+        }, new Date());
+
+        const hoje = new Date();
+        const diffMs = (maisAntigo.getTime() + (30 * 24 * 60 * 60 * 1000)) - hoje.getTime();
+        const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+        this.diasParaLiberar = diffDias > 0 ? diffDias : 0;
+        this.anunciosRestantes = 0;
+      } catch (error) {
+        console.error("Erro ao atualizar status limite:", error);
+        this.diasParaLiberar = 0;
+        this.anunciosRestantes = 5;
+      }
+    },
     async finalizarAnuncio() {
-  try {
-    if (!this.usuarioId) {
-      alert("Informe o ID do usuário.");
-      return;
+      try {
+        if (!this.usuarioId) {
+          alert("Informe o ID do usuário.");
+          return;
+        }
+
+        // Atualiza status do limite antes de tentar criar
+        await this.atualizarStatusLimite();
+
+        if (this.anunciosRestantes === 0) {
+          alert(`Você atingiu o limite de 5 anúncios. Aguarde ${this.diasParaLiberar} dia(s) para criar novos.`);
+          return;
+        }
+
+        if (!this.anuncio.imagens.some(img => img.trim() !== "")) {
+          alert("Adicione pelo menos uma imagem.");
+          return;
+        }
+
+        let precoFormatado = this.anuncio.preco.replace(/\./g, "").replace(",", ".");
+        const precoLimpo = parseFloat(precoFormatado);
+
+        if (isNaN(precoLimpo)) {
+          alert("Preço inválido, corrija o valor.");
+          return;
+        }
+
+        const dadosEnvio = {
+          tipoVeiculo: this.anuncio.tipoVeiculo,
+          marca: this.anuncio.marca.trim(),
+          modelo: this.anuncio.modelo.trim(),
+          preco: precoLimpo,
+          anoFabricacao: parseInt(this.anuncio.anoFabricacao),
+          anoModelo: parseInt(this.anuncio.anoModelo),
+          km: parseInt(this.anuncio.km),
+          cor: this.anuncio.cor.trim(),
+          categoria: this.anuncio.categoria.trim(),
+          cambio: this.anuncio.cambio.trim(),
+          combustivel: this.anuncio.combustivel.trim(),
+          descricao: this.anuncio.descricao.trim(),
+          opcionais: this.anuncio.opcionais || [],
+          imagens: this.anuncio.imagens.filter(img => img.trim() !== ""),
+        };
+
+        await anuncioApi.post(`/usuario/${this.usuarioId}`, dadosEnvio);
+
+        alert("Anúncio criado com sucesso!");
+        this.$router.push({ name: "TelaAnuncios" });
+      } catch (error) {
+        if (error.response && error.response.status === 403) {
+          alert(error.response.data || "Limite de anúncios atingido.");
+        } else {
+          console.error(error);
+          alert("Erro ao criar anúncio. Tente novamente.");
+        }
+      }
     }
-    if (!this.anuncio.imagens.some(img => img.trim() !== "")) {
-      alert("Adicione pelo menos uma imagem.");
-      return;
-    }
-
-    let precoFormatado = this.anuncio.preco;
-    precoFormatado = precoFormatado.replace(/\./g, '').replace(',', '.');
-    const precoLimpo = parseFloat(precoFormatado);
-
-    if (isNaN(precoLimpo)) {
-      alert("Preço inválido, corrija o valor.");
-      return;
-    }
-
-    const dadosEnvio = {
-      tipoVeiculo: this.anuncio.tipoVeiculo,
-      marca: this.anuncio.marca.trim(),
-      modelo: this.anuncio.modelo.trim(),
-      preco: precoLimpo,
-      anoFabricacao: parseInt(this.anuncio.anoFabricacao),
-      anoModelo: parseInt(this.anuncio.anoModelo),
-      km: parseInt(this.anuncio.km),
-      cor: this.anuncio.cor.trim(),
-      categoria: this.anuncio.categoria.trim(),
-      cambio: this.anuncio.cambio.trim(),
-      combustivel: this.anuncio.combustivel.trim(),
-      descricao: this.anuncio.descricao.trim(),
-      opcionais: this.anuncio.opcionais || [],
-      imagens: this.anuncio.imagens.filter(img => img.trim() !== ""),
-    };
-
-    console.log("Enviando dados:", dadosEnvio);
-
-    await anuncioApi.post(`/usuario/${this.usuarioId}`, dadosEnvio);
-
-    alert("Anúncio criado com sucesso!");
-    this.$router.push({ name: "TelaAnuncios" });
-  } catch (error) {
-    console.error("Erro ao criar anúncio:", error);
-    alert("Erro ao criar anúncio. Tente novamente.");
   }
-}
-,
-  },
 };
 </script>
 
 <style scoped>
-
 .opcionais {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -453,7 +509,7 @@ export default {
   color: white;
   border-color: #5b3199;
 }
-/* mantém o mesmo estilo do código anterior */
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
@@ -539,7 +595,7 @@ h3 {
 
 .input-container input {
   width: 100%;
-  padding-right: 35px; /* Espaço extra para o ícone */
+  padding-right: 35px;
   box-sizing: border-box;
 }
 
@@ -598,7 +654,6 @@ button {
   color: white;
 }
 
-/* Responsividade */
 @media (max-width: 600px) {
   .container {
     width: 90%;
