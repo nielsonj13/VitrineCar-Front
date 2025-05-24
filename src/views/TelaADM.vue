@@ -49,6 +49,12 @@
               </tr>
             </tbody>
           </table>
+          <button v-if="usuariosFiltrados.length < usuarios.length" @click="verMaisUsuarios" class="btn-ver-mais">
+            Ver mais usuários
+          </button>
+          <button v-if="limiteUsuarios > 10" @click="verMenosUsuarios" class="btn-ver-mais">
+            Ver menos usuários
+          </button>
         </div>
 
         <!-- Tabela de Anúncios -->
@@ -64,6 +70,7 @@
                 <th>Modelo</th>
                 <th>Preço</th>
                 <th>ID do Usuário</th>
+                <th>Nome do Usuário</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -74,13 +81,24 @@
                 <td>{{ anuncio.modelo }}</td>
                 <td>R$ {{ anuncio.preco }}</td>
                 <td>{{ anuncio.usuario.id }}</td>
+                <td>{{ anuncio.usuario.nome }}</td>
                 <td>
+                   <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
                   <button class="btn-editar" @click="editarAnuncio(anuncio.id)">Editar</button>
                   <button  class="btn-excluir" @click="confirmarExclusaoAnuncio(anuncio.id)">Excluir</button>
                 </td>
               </tr>
             </tbody>
           </table>
+
+          <button v-if="anunciosFiltrados.length < anuncios.length" @click="verMaisAnuncios" class="btn-ver-mais">
+            Ver mais anúncios
+          </button>
+
+          <button v-if="limiteAnuncios > 10" @click="verMenosAnuncios" class="btn-ver-mais">
+          Ver menos anúncios
+        </button>
+
         </div>
       </div>
     </div>
@@ -105,6 +123,8 @@ export default {
       abaAtiva: 'usuarios',
       buscaUsuario: '',
       buscaAnuncio: '',
+       limiteUsuarios: 10, 
+      limiteAnuncios: 10,
     };
   },
   computed: {
@@ -113,14 +133,14 @@ export default {
       return this.usuarios.filter(usuario =>
         usuario.nome.toLowerCase().includes(termo) ||
         usuario.email.toLowerCase().includes(termo)
-      );
+      ).slice(0, this.limiteUsuarios);
     },
     anunciosFiltrados() {
       const termo = this.buscaAnuncio.toLowerCase();
       return this.anuncios.filter(anuncio =>
         anuncio.marca.toLowerCase().includes(termo) ||
         anuncio.modelo.toLowerCase().includes(termo)
-      );
+      ).slice(0, this.limiteAnuncios);
     },
   },
   created() {
@@ -139,6 +159,19 @@ export default {
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       }
+    },
+
+    verMaisUsuarios() {
+      this.limiteUsuarios += 10;
+    },
+    verMenosUsuarios() {
+      this.limiteUsuarios = Math.max(10, this.limiteUsuarios - 10);
+    },
+    verMaisAnuncios() {
+      this.limiteAnuncios += 10;
+    },
+    verMenosAnuncios() {
+      this.limiteAnuncios = Math.max(10, this.limiteAnuncios - 10);
     },
 
     async confirmarExclusaoUsuario(id) {
@@ -179,6 +212,13 @@ export default {
       } catch (error) {
         console.error("Erro ao excluir o anúncio:", error);
       }
+    },
+    verAnuncio(anuncio) {
+      // Passando os dados do anúncio para a TelaVeiculo
+      this.$router.push({ 
+        name: "TelaVeiculo", 
+        params: { id: anuncio.id, usuarioId: this.usuarioId }
+      });  // Redireciona para a TelaVeiculo com os parâmetros necessários
     },
   },
 };
@@ -322,6 +362,10 @@ button:hover {
 
 .btn-editar:hover {
   background-color: #e0a800;
+}
+
+.btn-ver-mais {
+  margin-top: 15px;
 }
 
 
