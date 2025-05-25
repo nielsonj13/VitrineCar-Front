@@ -187,16 +187,15 @@ export default {
 
 <style scoped>
 /* Estilos gerais */
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px 30px;
-  font-family: 'Arial', sans-serif;
-}
-
-.content {
-  text-align: center;
-}
+ .container {
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+  
+  .content {
+    text-align: center;
+  }
 
 h2 {
   color: #5b3199;
@@ -261,8 +260,13 @@ input:focus {
 .usuario-selecionado {
   margin-bottom: 20px;
   font-size: 1rem;
-  text-align: left;
+  text-align: center;   
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;       
 }
+
 
 .usuario-selecionado p {
   margin-bottom: 10px;
