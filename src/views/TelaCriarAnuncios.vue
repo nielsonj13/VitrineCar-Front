@@ -231,6 +231,18 @@
         </div>
       </div>
 
+      <div v-if="diasParaLiberar > 0" class="alerta-limite">
+        <p>
+          Você atingiu o limite de 5 anúncios. Aguarde
+          <strong>{{ diasParaLiberar }} dia(s)</strong> para criar novos.
+        </p>
+      </div>
+      <div v-else class="alerta-limite">
+        <p>
+          Você pode criar
+          <strong>{{ anunciosRestantes }}</strong> anúncio(s) agora.
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -385,39 +397,36 @@ export default {
     },
     async atualizarStatusLimite() {
       try {
-        // Busca quantos anúncios o usuário criou nos últimos 30 dias
-        const countResp = await anuncioApi.get(`/usuario/${this.usuarioId}/count`);
-        const totalRecentes = countResp.data;
-
-        // Busca todos os anúncios do usuário para achar o mais antigo dentro da janela
-        const anunciosResp = await anuncioApi.get(`/usuario/${this.usuarioId}`);
-        const anuncios = anunciosResp.data;
-
-        if (totalRecentes < 5) {
+        if (!this.usuarioId) {
           this.diasParaLiberar = 0;
-          this.anunciosRestantes = 5 - totalRecentes;
+          this.anunciosRestantes = 5;
+          return;
+        }
+        const anunciosResp = await anuncioApi.get(`/usuario/${this.usuarioId}/recentes`);
+        const anunciosRecentes = anunciosResp.data;
+
+        if (anunciosRecentes.length < 5) {
+          this.diasParaLiberar = 0;
+          this.anunciosRestantes = 5 - anunciosRecentes.length;
           return;
         }
 
-        const dataLimite = new Date();
-        dataLimite.setDate(dataLimite.getDate() - 30);
-
-        const anunciosRecentes = anuncios.filter(anuncio => {
-          const dataCriacao = new Date(anuncio.dataCriacao);
-          return dataCriacao >= dataLimite;
-        });
-
-        const maisAntigo = anunciosRecentes.reduce((min, anuncio) => {
-          const dataCriacao = new Date(anuncio.dataCriacao);
-          return dataCriacao < min ? dataCriacao : min;
-        }, new Date());
+        const datasCriacao = anunciosRecentes.map(a => new Date(a.dataCriacao));
+        const maisAntiga = new Date(Math.min.apply(null, datasCriacao));
 
         const hoje = new Date();
-        const diffMs = (maisAntigo.getTime() + (30 * 24 * 60 * 60 * 1000)) - hoje.getTime();
+        const limite = new Date(maisAntiga.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        const diffMs = limite - hoje;
         const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-        this.diasParaLiberar = diffDias > 0 ? diffDias : 0;
-        this.anunciosRestantes = 0;
+        if (diffDias > 0) {
+          this.diasParaLiberar = diffDias;
+          this.anunciosRestantes = 0;
+        } else {
+          this.diasParaLiberar = 0;
+          this.anunciosRestantes = 1;
+        }
       } catch (error) {
         console.error("Erro ao atualizar status limite:", error);
         this.diasParaLiberar = 0;
@@ -425,65 +434,89 @@ export default {
       }
     },
     async finalizarAnuncio() {
-      try {
-        if (!this.usuarioId) {
-          alert("Informe o ID do usuário.");
-          return;
-        }
+  try {
+    if (!this.usuarioId) {
+      alert("Informe o ID do usuário.");
+      return;
+    }
 
-        // Atualiza status do limite antes de tentar criar
-        await this.atualizarStatusLimite();
+    await this.atualizarStatusLimite();
 
-        if (this.anunciosRestantes === 0) {
-          alert(`Você atingiu o limite de 5 anúncios. Aguarde ${this.diasParaLiberar} dia(s) para criar novos.`);
-          return;
-        }
+    if (this.anunciosRestantes === 0) {
+      alert(`Você atingiu o limite de 5 anúncios. Aguarde ${this.diasParaLiberar} dia(s) para criar novos.`);
+      return;
+    }
 
-        if (!this.anuncio.imagens.some(img => img.trim() !== "")) {
-          alert("Adicione pelo menos uma imagem.");
-          return;
-        }
+    if (!this.anuncio.imagens.some(img => img.trim() !== "")) {
+      alert("Adicione pelo menos uma imagem.");
+      return;
+    }
 
-        let precoFormatado = this.anuncio.preco.replace(/\./g, "").replace(",", ".");
-        const precoLimpo = parseFloat(precoFormatado);
+    let precoFormatado = this.anuncio.preco.replace(/\./g, "").replace(",", ".");
+    const precoLimpo = parseFloat(precoFormatado);
 
-        if (isNaN(precoLimpo)) {
-          alert("Preço inválido, corrija o valor.");
-          return;
-        }
+    if (isNaN(precoLimpo)) {
+      alert("Preço inválido, corrija o valor.");
+      return;
+    }
 
-        const dadosEnvio = {
-          tipoVeiculo: this.anuncio.tipoVeiculo,
-          marca: this.anuncio.marca.trim(),
-          modelo: this.anuncio.modelo.trim(),
-          preco: precoLimpo,
-          anoFabricacao: parseInt(this.anuncio.anoFabricacao),
-          anoModelo: parseInt(this.anuncio.anoModelo),
-          km: parseInt(this.anuncio.km),
-          cor: this.anuncio.cor.trim(),
-          categoria: this.anuncio.categoria.trim(),
-          cambio: this.anuncio.cambio.trim(),
-          combustivel: this.anuncio.combustivel.trim(),
-          descricao: this.anuncio.descricao.trim(),
-          opcionais: this.anuncio.opcionais || [],
-          imagens: this.anuncio.imagens.filter(img => img.trim() !== ""),
-        };
+    const dadosEnvio = {
+      tipoVeiculo: this.anuncio.tipoVeiculo,
+      marca: this.anuncio.marca.trim(),
+      modelo: this.anuncio.modelo.trim(),
+      preco: precoLimpo,
+      anoFabricacao: parseInt(this.anuncio.anoFabricacao),
+      anoModelo: parseInt(this.anuncio.anoModelo),
+      km: parseInt(this.anuncio.km),
+      cor: this.anuncio.cor.trim(),
+      categoria: this.anuncio.categoria.trim(),
+      cambio: this.anuncio.cambio.trim(),
+      combustivel: this.anuncio.combustivel.trim(),
+      descricao: this.anuncio.descricao.trim(),
+      opcionais: this.anuncio.opcionais || [],
+      imagens: this.anuncio.imagens.filter(img => img.trim() !== ""),
+    };
 
-        await anuncioApi.post(`/usuario/${this.usuarioId}`, dadosEnvio);
+    await anuncioApi.post(`/usuario/${this.usuarioId}`, dadosEnvio);
 
-        alert("Anúncio criado com sucesso!");
-        this.$router.push({ name: "TelaAnuncios" });
-      } catch (error) {
-        if (error.response && error.response.status === 403) {
-          alert(error.response.data || "Limite de anúncios atingido.");
-        } else {
-          console.error(error);
-          alert("Erro ao criar anúncio. Tente novamente.");
+    alert("Anúncio criado com sucesso!");
+    this.$router.push({ name: "TelaAnuncios" });
+
+  } catch (error) {
+  console.error("Erro ao criar anúncio:", error);
+
+  let msg = "Erro ao criar anúncio. Tente novamente.";
+
+  // Tenta pegar a mensagem da resposta do backend
+  if (error.response) {
+    console.log("Response status:", error.response.status);
+    console.log("Response data:", error.response.data);
+
+    if (error.response.status === 403) {
+      if (error.response.data) {
+        if (typeof error.response.data === "string") {
+          msg = error.response.data;
+        } else if (typeof error.response.data === "object") {
+          // Tenta campos comuns
+          msg = error.response.data.message || error.response.data.error || JSON.stringify(error.response.data);
         }
       }
+    } else {
+      // Outros erros, tenta exibir dados da resposta
+      msg = JSON.stringify(error.response.data);
     }
+  } else if (error.message) {
+    msg = error.message;
   }
-};
+
+  alert(msg);
+}
+
+
+
+    }
+  }}
+;
 </script>
 
 <style scoped>
