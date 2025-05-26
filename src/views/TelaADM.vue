@@ -175,7 +175,7 @@ export default {
     },
 
     async confirmarExclusaoUsuario(id) {
-      const confirmacao = window.confirm('Tem certeza que deseja excluir este usuário?');
+      const confirmacao = window.confirm('Tem certeza que deseja excluir este usuário? Ao excluir o usuário todos os dados vinculados a ele serão excluidos juntos.');
       if (confirmacao) {
         this.excluirUsuario(id);
       }
@@ -194,10 +194,22 @@ export default {
 
     async excluirUsuario(id) {
       try {
+        // Filtra os anúncios que pertencem ao usuário
+        const anunciosDoUsuario = this.anuncios.filter(anuncio => anuncio.usuario.id === id);
+
+        // Exclui cada anúncio
+        for (const anuncio of anunciosDoUsuario) {
+          await anuncioApi.delete(`/${anuncio.id}`);
+        }
+
+        // Agora exclui o usuário
         await usuarioApi.delete(`/${id}`);
+
+        alert("Usuário e seus anúncios excluídos com sucesso.");
         this.carregarDados();
       } catch (error) {
-        console.error("Erro ao excluir o usuário:", error);
+        console.error("Erro ao excluir o usuário e seus anúncios:", error);
+        alert("Erro ao excluir o usuário. Verifique se há anúncios vinculados.");
       }
     },
 
