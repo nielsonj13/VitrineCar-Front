@@ -6,41 +6,8 @@
       <div class="content">
         <h2>Meus Anúncios</h2>
 
-<<<<<<< HEAD
         <!-- Exibição dos anúncios -->
         <div class="anuncios-container">
-=======
-        <!-- Busca por nome com autocomplete -->
-        <div v-if="!usuarioSelecionado" class="input-container">
-          <label for="usuarioNome">Informe o nome do usuário:</label>
-          <input 
-            type="text" 
-            v-model="usuarioNome" 
-            placeholder="Digite o nome do usuário"
-            autocomplete="off"
-            @input="buscarUsuarios"
-          />
-          <ul v-if="usuariosSugeridos.length" class="autocomplete-list">
-            <li
-              v-for="usuario in usuariosSugeridos"
-              :key="usuario.id"
-              @click="selecionarUsuario(usuario)"
-              class="autocomplete-item"
-            >
-              <strong>{{ usuario.nome }}</strong> — <small>{{ usuario.email }}</small>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Exibição do usuário selecionado e botão para limpar -->
-        <div v-if="usuarioSelecionado" class="usuario-selecionado">
-          <p><strong>Usuário selecionado:</strong> {{ usuarioSelecionado.nome }} ({{ usuarioSelecionado.email }})</p>
-          <button @click="limparUsuarioSelecionado" class="btn-limpar">Alterar usuário</button>
-        </div>
-
-        <!-- Exibição dos anúncios -->
-        <div v-if="usuarioSelecionado" class="anuncios-container">
->>>>>>> main
           <div v-for="(anuncio, index) in anuncios" :key="anuncio.id" class="card">
             <img 
               :src="getImagem(anuncio)" 
@@ -48,6 +15,7 @@
               @error="imagemErro($event)"
               class="img-fluid"
             />
+
             <div class="car-info">
               <div class="title-container">
                 <h3>{{ anuncio.marca }} {{ anuncio.modelo }}</h3>
@@ -60,6 +28,7 @@
               <p>R$ {{ anuncio.preco }}</p>
               <span>{{ anuncio.anoFabricacao }}/{{ anuncio.anoModelo }}</span>
             </div>
+
             <div class="card-actions">
               <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
               <button class="btn-vendido" @click="marcarComoVendido(anuncio)">Marcar como Vendido</button>
@@ -90,33 +59,21 @@ export default {
   },
   data() {
     return {
-<<<<<<< HEAD
       usuarioId: "",
-=======
-      usuarioNome: "",
-      usuariosSugeridos: [],
-      usuarioSelecionado: null,
->>>>>>> main
       anuncios: [],
     };
   },
 
   methods: {
-<<<<<<< HEAD
     async buscarUsuarioLogado() {
       const token = sessionStorage.getItem("authToken");
 
       if (!token) {
         this.$router.push("/login"); // 🔴 Redireciona se não estiver logado
-=======
-    async buscarUsuarios() {
-      if (this.usuarioNome.length < 2) {
-        this.usuariosSugeridos = [];
->>>>>>> main
         return;
       }
+
       try {
-<<<<<<< HEAD
         const response = await usuarioApi.get("/logado", {
           headers: {
             Authorization: `Basic ${token}`
@@ -125,38 +82,6 @@ export default {
 
         this.usuarioId = response.data.id;
         this.buscarAnunciosUsuario();
-=======
-        const response = await usuarioApi.get(`/search?nome=${encodeURIComponent(this.usuarioNome)}`);
-        this.usuariosSugeridos = response.data;
-      } catch (error) {
-        console.error("Erro ao buscar usuários:", error);
-        this.usuariosSugeridos = [];
-      }
-    },
-
-    async selecionarUsuario(usuario) {
-      this.usuarioSelecionado = usuario;
-      this.usuarioNome = usuario.nome;
-      this.usuariosSugeridos = [];
-      await this.buscarAnunciosUsuario();
-    },
-
-    limparUsuarioSelecionado() {
-      this.usuarioSelecionado = null;
-      this.usuarioNome = "";
-      this.anuncios = [];
-      this.usuariosSugeridos = [];
-    },
-
-    async buscarAnunciosUsuario() {
-      if (!this.usuarioSelecionado) {
-        alert("Selecione um usuário válido para buscar anúncios.");
-        return;
-      }
-      try {
-        const anunciosResponse = await anuncioApi.get(`/usuario/${this.usuarioSelecionado.id}`);
-        this.anuncios = anunciosResponse.data;
->>>>>>> main
       } catch (error) {
         console.error("Erro ao buscar usuário logado:", error);
         this.$router.push("/login"); // 🔴 Redireciona se o token for inválido
@@ -176,11 +101,7 @@ export default {
     },
 
     getImagem(anuncio) {
-<<<<<<< HEAD
       if (anuncio.imagens?.length > 0) {
-=======
-      if (anuncio.imagens && Array.isArray(anuncio.imagens) && anuncio.imagens.length > 0) {
->>>>>>> main
         return anuncio.imagens[0];
       }
       return '/logos/logo_vitrinecar.png';
@@ -192,31 +113,18 @@ export default {
 
     toggleFavorito(anuncio) {
       anuncio.favorito = !anuncio.favorito;
-<<<<<<< HEAD
-=======
-      // Se quiser, pode salvar essa alteração no backend
->>>>>>> main
     },
 
     verAnuncio(anuncio) {
       this.$router.push({ 
         name: "TelaVeiculo", 
-<<<<<<< HEAD
         params: { id: anuncio.id, usuarioId: this.usuarioId }
       });
     },
 
     async marcarComoVendido(anuncio) {
-=======
-        params: { id: anuncio.id, usuarioId: this.usuarioSelecionado.id }
-      });
-    },
-
-    marcarComoVendido(anuncio) {
->>>>>>> main
       anuncio.vendido = true;
       alert(`O anúncio ${anuncio.marca} ${anuncio.modelo} foi marcado como vendido.`);
-      // Se quiser, envie essa atualização para o backend
     },
 
     editarAnuncio(id) {
@@ -226,11 +134,7 @@ export default {
     async excluirAnuncio(id) {
       try {
         await anuncioApi.delete(`/${id}`);
-<<<<<<< HEAD
         this.anuncios = this.anuncios.filter(anuncio => anuncio.id !== id);
-=======
-        this.anuncios = this.anuncios.filter(a => a.id !== id);
->>>>>>> main
         alert("Anúncio excluído com sucesso!");
       } catch (error) {
         console.error("Erro ao excluir anúncio:", error);
@@ -240,11 +144,7 @@ export default {
 
     criarNovoAnuncio() {
       this.$router.push({ name: "TelaCriarAnuncios" });
-<<<<<<< HEAD
     }
-=======
-    },
->>>>>>> main
   },
 
   mounted() {
@@ -253,109 +153,24 @@ export default {
 };
 </script>
 
+
 <style scoped>
-/* Estilos gerais */
- .container {
-    max-width: 80%;
-    margin: 0 auto;
-    padding: 20px 0;
-  }
-  
-  .content {
-    text-align: center;
-  }
+/* Estilo similar ao da tela de anúncios */
+.container {
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.content {
+  text-align: center;
+}
 
 h2 {
   color: #5b3199;
   margin-bottom: 20px;
-  font-size: 2rem;
 }
 
-/* Estilo do campo de busca */
-.input-container {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.input-container label {
-  display: block;
-  font-size: 1rem;
-  margin-bottom: 10px;
-  color: #333;
-}
-
-input {
-  width: 100%;
-  padding: 10px 15px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-  transition: border-color 0.3s ease;
-}
-
-input:focus {
-  border-color: #5b3199;
-  outline: none;
-}
-
-.autocomplete-list {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  width: 100%;
-  z-index: 10;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.autocomplete-item {
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.autocomplete-item:hover {
-  background-color: #f0f0f0;
-}
-
-/* Estilo do usuário selecionado */
-.usuario-selecionado {
-  margin-bottom: 20px;
-  font-size: 1rem;
-  text-align: center;   
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;       
-}
-
-
-.usuario-selecionado p {
-  margin-bottom: 10px;
-}
-
-.btn-limpar {
-  background-color: #f39c12;
-  border: none;
-  color: white;
-  padding: 8px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease;
-}
-
-.btn-limpar:hover {
-  background-color: #e67e22;
-}
-
-/* Cards de anúncios */
 .anuncios-container {
   display: flex;
   gap: 20px;
@@ -373,7 +188,6 @@ input:focus {
   width: 250px;
   text-align: center;
   padding: 15px;
-  position: relative;
 }
 
 .card img {
@@ -444,6 +258,7 @@ input:focus {
 .btn-ver {
   background-color: #5b3199;
   color: white;
+  text-decoration: none;
 }
 
 .btn-vendido {
@@ -461,6 +276,42 @@ input:focus {
   color: white;
 }
 
+.vendido-label {
+  display: inline-block;
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.vendido-banner {
+  background-color: #e4ffdd; /* Fundo vermelho claro */
+  color: #28a745; /* Vermelho escuro */
+  font-weight: bold;
+  text-align: center;
+  padding: 12px; /* Aumenta o padding para centralizar melhor */
+  border-radius: 8px;
+  border: 1px solid #28a745;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px; /* Espaçamento entre ícone e texto */
+  height: 80px; /* Define uma altura fixa */
+}
+
+.vendido-banner i {
+  font-size: 20px;
+  color: #28a745;
+}
+
+.vendido-banner p {
+  margin: 0; /* Remove margens extras que estavam desalinhando o texto */
+  line-height: 1.2; /* Ajusta a altura da linha para melhor alinhamento */
+}
+
 .new-card {
   background-color: #f3f3f3;
   border-radius: 10px;
@@ -473,7 +324,6 @@ input:focus {
   align-items: center;
   cursor: pointer;
   text-align: center;
-  margin-top: 20px;
 }
 
 .new-icon {
@@ -486,5 +336,20 @@ input:focus {
   margin-top: 10px;
   color: #333;
   font-weight: bold;
+}
+
+.criar-anuncio {
+  margin-top: 20px;
+}
+
+.btn-criar {
+  background-color: #5b3199;
+  color: white;
+  padding: 15px;
+  font-size: 16px;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
 }
 </style>
