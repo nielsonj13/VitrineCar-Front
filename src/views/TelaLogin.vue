@@ -3,87 +3,94 @@
     <h2>Login</h2>
     <form @submit.prevent="fazerLogin">
       <div>
-        <label>Usuário</label>
-        <input v-model="username" type="text" required />
+        <label for="email">Email:</label>
+        <input v-model="email" type="email" id="email" required />
       </div>
       <div>
-        <label>Senha</label>
-        <input v-model="password" type="password" required />
+        <label for="senha">Senha:</label>
+        <input v-model="senha" type="password" id="senha" required />
       </div>
       <button type="submit">Entrar</button>
+      <p v-if="erro" class="erro">{{ erro }}</p>
     </form>
-    <p v-if="erro" class="error">{{ erro }}</p>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
+
 export default {
   data() {
     return {
-      username: "",
-      password: "",
-      erro: null,
-    };
+      email: '',
+      senha: '',
+      erro: ''
+    }
   },
   methods: {
     async fazerLogin() {
-      this.erro = null;
       try {
-        // Codifica em base64 usuário:senha
-        const token = btoa(`${this.username}:${this.password}`);
-
-        // Testa autenticação fazendo uma requisição ao backend
-        const res = await fetch("http://localhost:8080/anuncios", {
+        const token = btoa(`${this.email}:${this.senha}`)
+        const response = await axios.get('http://localhost:8080/usuarios', {
           headers: {
-            Authorization: `Basic ${token}`,
-          },
-        });
+            Authorization: `Basic ${token}`
+          }
+        })
 
-        if (!res.ok) {
-          throw new Error("Usuário ou senha inválidos");
-        }
-
-        // Salva token na sessão (ou localStorage) para usar em outras requisições
-        sessionStorage.setItem("authToken", token);
-
-        // Redireciona para a página inicial ou dashboard
-        this.$router.push({ name: "TelaPrincipal" });
+        // Armazena o token (ou outro dado, como usuário)
+        sessionStorage.setItem('authToken', token)
+        alert('Login realizado com sucesso!')
+        // Redirecionar ou mudar de página
+        this.$router.push('/') // ou outra rota protegida
 
       } catch (err) {
-        this.erro = err.message;
+        this.erro = 'Credenciais inválidas. Verifique email e senha.'
+        console.error(err)
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>
 
 <style scoped>
 .login-container {
   max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
+  margin: 100px auto;
+  padding: 2rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
 input {
   width: 100%;
-  margin-bottom: 15px;
   padding: 8px;
-  font-size: 16px;
+  margin: 6px 0 12px;
+  box-sizing: border-box;
 }
+
 button {
-  padding: 10px;
   width: 100%;
-  background-color: #5b3199;
+  padding: 10px;
+  background-color: #0077cc;
   color: white;
-  font-weight: bold;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
 }
-.error {
+
+button:hover {
+  background-color: #005fa3;
+}
+
+.erro {
   color: red;
-  margin-top: 10px;
+  margin-top: 1rem;
+  text-align: center;
 }
 </style>
