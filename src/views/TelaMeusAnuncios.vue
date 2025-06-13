@@ -6,19 +6,8 @@
       <div class="content">
         <h2>Meus Anúncios</h2>
 
-        <!-- Formulário para inserir o ID do usuário -->
-        <div v-if="!usuarioIdInformado">
-          <label for="usuarioId">Informe o ID do Usuário:</label>
-          <input 
-            type="number" 
-            v-model="usuarioId" 
-            placeholder="ID do Usuário" 
-          />
-          <button @click="buscarAnunciosUsuario">Buscar Anúncios</button>
-        </div>
-
         <!-- Exibição dos anúncios -->
-        <div v-if="usuarioIdInformado" class="anuncios-container">
+        <div class="anuncios-container">
           <div v-for="(anuncio, index) in anuncios" :key="anuncio.id" class="card">
             <img 
               :src="getImagem(anuncio)" 
@@ -61,7 +50,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi, usuarioApi } from "../Services/http.js";  // Importando as instâncias do Axios configuradas
+import { anuncioApi, usuarioApi } from "../Services/http.js";  // Importando instâncias do Axios
 
 export default {
   name: "TelaMeusAnuncios",
@@ -70,99 +59,98 @@ export default {
   },
   data() {
     return {
-      usuarioId: "",  // O ID do usuário fornecido
-      anuncios: [],  // Lista de anúncios que o usuário tem
-      usuarioIdInformado: false,  // Flag para indicar se o ID do usuário foi informado
+      usuarioId: "",       // Preenchido automaticamente após login
+      anuncios: [],        // Lista de anúncios que serão exibidos
     };
   },
+
   methods: {
-    // Função para buscar os anúncios do usuário após inserir o ID
-    async buscarAnunciosUsuario() {
-      if (!this.usuarioId) {
-        alert("Por favor, informe o ID do usuário.");
-        return;
-      }
+    async buscarUsuarioLogado() {
+      const token = sessionStorage.getItem("authToken");
+      if (!token) return;
 
       try {
-        // Primeiro, verificamos se o usuário existe (usando `buscarUsuarioPorId`)
-        const usuarioResponse = await usuarioApi.get(`/${this.usuarioId}`);
-        
-        // Se o usuário não for encontrado, exibe uma mensagem de erro
-        if (!usuarioResponse.data) {
-          alert("Usuário não encontrado.");
-          return;
-        }
+        const response = await usuarioApi.get("/logado", {
+          headers: {
+            Authorization: `Basic ${token}`
+          }
+        });
 
-        // Depois, obtemos os anúncios do usuário (usando `listarAnunciosPorUsuario`)
-        const anunciosResponse = await anuncioApi.get(`/usuario/${this.usuarioId}`);
-        this.anuncios = anunciosResponse.data;  // Preenche a lista com os anúncios do usuário
+        this.usuarioId = response.data.id;
+        this.buscarAnunciosUsuario();
 
-        this.usuarioIdInformado = true;  // Marca o ID como informado, permitindo exibir os anúncios
       } catch (error) {
-        console.error("Erro ao buscar meus anúncios:", error);
-        alert("Erro ao buscar anúncios. Tente novamente.");
+        console.error("Erro ao buscar usuário logado:", error);
+        alert("Erro ao carregar dados do usuário logado.");
       }
     },
 
-    // Função para obter a imagem do anúncio (caso tenha múltiplas imagens)
+    async buscarAnunciosUsuario() {
+      if (!this.usuarioId) return;
+
+      try {
+        const anunciosResponse = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        this.anuncios = anunciosResponse.data;
+      } catch (error) {
+        console.error("Erro ao buscar anúncios:", error);
+        alert("Erro ao buscar anúncios.");
+      }
+    },
+
     getImagem(anuncio) {
-      if (anuncio.imagens && Array.isArray(anuncio.imagens) && anuncio.imagens.length > 0) {
-        return anuncio.imagens[0];  // Retorna a primeira imagem
+      if (anuncio.imagens?.length > 0) {
+        return anuncio.imagens[0];
       }
-      return '/logos/logo_vitrinecar.png';  // Imagem padrão caso não tenha imagens
+      return '/logos/logo_vitrinecar.png';
     },
 
-    // Função para exibir erro ao carregar a imagem
     imagemErro(event) {
-      event.target.src = '/logos/logo_vitrinecar.png';  // Substitui por imagem padrão se houver erro
+      event.target.src = '/logos/logo_vitrinecar.png';
     },
 
-    // Função para alternar o favorito do anúncio
     toggleFavorito(anuncio) {
       anuncio.favorito = !anuncio.favorito;
-      // Aqui você pode fazer uma requisição para salvar o estado do favorito no backend, se necessário
+      // (opcional) salvar estado no backend
     },
 
-    // Função para visualizar o anúncio
     verAnuncio(anuncio) {
-      // Passando os dados do anúncio para a TelaVeiculo
       this.$router.push({ 
         name: "TelaVeiculo", 
         params: { id: anuncio.id, usuarioId: this.usuarioId }
-      });  // Redireciona para a TelaVeiculo com os parâmetros necessários
+      });
     },
 
-    // Função para marcar o anúncio como vendido
     async marcarComoVendido(anuncio) {
       anuncio.vendido = true;
-      // Aqui você pode enviar uma requisição para salvar o status de 'vendido' no backend
       alert(`O anúncio ${anuncio.marca} ${anuncio.modelo} foi marcado como vendido.`);
     },
 
-    // Função para editar o anúncio
     editarAnuncio(id) {
-      this.$router.push({ name: "TelaEditarAnuncios", params: { id: id } });  // Redireciona para a tela de editar
+      this.$router.push({ name: "TelaEditarAnuncios", params: { id: id } });
     },
 
-    // Função para excluir o anúncio
     async excluirAnuncio(id) {
       try {
-        await anuncioApi.delete(`/${id}`);  // Faz a requisição para excluir o anúncio
-        this.anuncios = this.anuncios.filter(anuncio => anuncio.id !== id);  // Atualiza a lista de anúncios
+        await anuncioApi.delete(`/${id}`);
+        this.anuncios = this.anuncios.filter(anuncio => anuncio.id !== id);
         alert("Anúncio excluído com sucesso!");
       } catch (error) {
-        console.error("Erro ao excluir o anúncio:", error);
+        console.error("Erro ao excluir anúncio:", error);
         alert("Erro ao excluir o anúncio.");
       }
     },
 
-    // Função para redirecionar para a tela de criação de anúncio
     criarNovoAnuncio() {
-      this.$router.push({ name: "TelaCriarAnuncios" });  // Redireciona para a tela de criação de anúncio
+      this.$router.push({ name: "TelaCriarAnuncios" });
     }
   },
+
+  mounted() {
+    this.buscarUsuarioLogado();
+  }
 };
 </script>
+
 
 
 <style scoped>
