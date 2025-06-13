@@ -50,7 +50,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi, usuarioApi } from "../Services/http.js";  // Importando instâncias do Axios
+import { anuncioApi, usuarioApi } from "../Services/http.js";
 
 export default {
   name: "TelaMeusAnuncios",
@@ -59,15 +59,19 @@ export default {
   },
   data() {
     return {
-      usuarioId: "",       // Preenchido automaticamente após login
-      anuncios: [],        // Lista de anúncios que serão exibidos
+      usuarioId: "",
+      anuncios: [],
     };
   },
 
   methods: {
     async buscarUsuarioLogado() {
       const token = sessionStorage.getItem("authToken");
-      if (!token) return;
+
+      if (!token) {
+        this.$router.push("/login"); // 🔴 Redireciona se não estiver logado
+        return;
+      }
 
       try {
         const response = await usuarioApi.get("/logado", {
@@ -78,10 +82,9 @@ export default {
 
         this.usuarioId = response.data.id;
         this.buscarAnunciosUsuario();
-
       } catch (error) {
         console.error("Erro ao buscar usuário logado:", error);
-        alert("Erro ao carregar dados do usuário logado.");
+        this.$router.push("/login"); // 🔴 Redireciona se o token for inválido
       }
     },
 
@@ -110,7 +113,6 @@ export default {
 
     toggleFavorito(anuncio) {
       anuncio.favorito = !anuncio.favorito;
-      // (opcional) salvar estado no backend
     },
 
     verAnuncio(anuncio) {
@@ -126,7 +128,7 @@ export default {
     },
 
     editarAnuncio(id) {
-      this.$router.push({ name: "TelaEditarAnuncios", params: { id: id } });
+      this.$router.push({ name: "TelaEditarAnuncios", params: { id } });
     },
 
     async excluirAnuncio(id) {
@@ -150,7 +152,6 @@ export default {
   }
 };
 </script>
-
 
 
 <style scoped>
