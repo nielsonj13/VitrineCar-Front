@@ -104,52 +104,90 @@
   </template>
   
   <script>
-  import Navbar from "../components/NavBar.vue";
-  import { anuncioApi } from "../Services/http.js";  // Importando a instância do Axios configurada para anúncios
-  
-  export default {
-    name: "TelaCriarAnuncio",
-    components: {
-      Navbar,
-    },
-    data() {
-      return {
-        usuarioId: "",  // Agora o ID do usuário será capturado aqui
-        anuncio: {
-          marca: "",
-          modelo: "",
-          preco: "",
-          anoFabricacao: "",
-          anoModelo: "",
-          descricao: "",
-          imagens: "",
-        },
-      };
-    },
-    methods: {
-      async criarAnuncio() {
-        try {
-          // Certifique-se de que todos os campos estão preenchidos
-          if (!this.anuncio.marca || !this.anuncio.modelo || !this.anuncio.preco || !this.anuncio.anoFabricacao || !this.anuncio.anoModelo || !this.anuncio.descricao) {
-            alert("Por favor, preencha todos os campos.");
-            return;
-          }
+import Navbar from "../components/NavBar.vue";
+import { anuncioApi, usuarioApi } from "../Services/http.js";
 
-          // Envia os dados para a criação do anúncio
-          const response = await anuncioApi.post(`/usuario/${this.usuarioId}`, this.anuncio);
-          
-          // Sucesso na criação
-          alert("Anúncio criado com sucesso!");
-          this.$router.push({ name: "TelaAnuncios" });
-
-        } catch (error) {
-          console.error("Erro ao criar anúncio:", error);
-          alert("Erro ao criar anúncio. Tente novamente.");
-        }
+export default {
+  name: "TelaCriarAnuncios",
+  components: {
+    Navbar,
+  },
+  data() {
+    return {
+      usuarioId: "",
+      anuncio: {
+        marca: "",
+        modelo: "",
+        preco: "",
+        anoFabricacao: "",
+        anoModelo: "",
+        descricao: "",
+        imagens: [],
       },
+    };
+  },
+
+  methods: {
+    async buscarUsuarioLogado() {
+      const token = sessionStorage.getItem("authToken");
+      if (!token) {
+        this.$router.push("/login");
+        return;
+      }
+
+      try {
+        const response = await usuarioApi.get("/logado", {
+          headers: {
+            Authorization: `Basic ${token}`
+          }
+        });
+
+        this.usuarioId = response.data.id;
+      } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+        this.$router.push("/login");
+      }
     },
-  };
-  </script>
+
+    async criarAnuncio() {
+      if (!this.usuarioId) {
+        alert("Usuário não autenticado.");
+        return;
+      }
+
+      const anuncioComUsuario = {
+        ...this.anuncio,
+        usuario: {
+          id: this.usuarioId
+        }
+      };
+
+      try {
+        await anuncioApi.post("/", anuncioComUsuario);
+        alert("Anúncio criado com sucesso!");
+        this.$router.push("/TelaMeusAnuncios");
+      } catch (error) {
+        console.error("Erro ao criar anúncio:", error);
+        alert("Erro ao criar anúncio. Verifique os dados.");
+      }
+    },
+
+    handleImagemUpload(event) {
+      const files = event.target.files;
+      const imagens = [];
+      for (let i = 0; i < files.length; i++) {
+        imagens.push(URL.createObjectURL(files[i]));
+      }
+      this.anuncio.imagens = imagens;
+    }
+  },
+
+  async mounted() {
+    await this.buscarUsuarioLogado();
+  }
+};
+</script>
+
   
   <style scoped>
   /* Estilos para a tela de criação de anúncio */
