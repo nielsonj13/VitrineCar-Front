@@ -43,12 +43,12 @@
     <div v-if="!mobileView && usuario" class="user-menu">
       <div class="user-info desktop-user" @click="toggleDropdown">
         <i class="bi bi-person-circle"></i>
-        <span class="user-name">{{ usuario.displayName || usuario.email }}</span>
+        <span class="user-name">{{ usuario.nome}}</span>
         <i :class="dropdownAberto ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
       </div>
 
       <div v-if="dropdownAberto" class="dropdown-menu">
-        <router-link to="/TelaMeusAnuncios" class="dropdown-item">
+        <router-link to="/meusanuncio" class="dropdown-item">
           <i class="bi bi-house-door"></i> Meus Anúncios
         </router-link>
         <router-link to="/TelaMinhaConta" class="dropdown-item">
@@ -66,6 +66,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 
 export default {
   name: "Navbar",
@@ -77,27 +78,52 @@ export default {
       mobileView: window.innerWidth <= 768,
     };
   },
-  
+
   methods: {
     checkMobileView() {
       this.mobileView = window.innerWidth <= 768;
     },
+
     toggleDropdown() {
       this.dropdownAberto = !this.dropdownAberto;
     },
+
     async logout() {
+      sessionStorage.removeItem("authToken");
+      this.usuario = null;
+      this.$router.push("/");
+    },
+
+    async carregarUsuario() {
+      const token = sessionStorage.getItem("authToken");
+      if (!token) return;
+
       try {
-        const auth = getAuth();
-        await signOut(auth);
-        this.dropdownAberto = false;
-        this.$router.push("/");
+        const response = await axios.get("http://localhost:8080/usuarios/logado", {
+          headers: {
+            Authorization: `Basic ${token}`
+          }
+        });
+        this.usuario = response.data; // agora pega só o usuário autenticado
       } catch (error) {
-        alert("Erro ao sair: " + error.message);
+        console.error("Erro ao carregar usuário logado:", error);
+        this.usuario = null;
       }
     },
   },
+
+  mounted() {
+    this.carregarUsuario();
+    window.addEventListener("resize", this.checkMobileView);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener("resize", this.checkMobileView);
+  }
 };
 </script>
+
+
 
 <style scoped>
 /* ======================= */
