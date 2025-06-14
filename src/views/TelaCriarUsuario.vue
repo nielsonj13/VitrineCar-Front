@@ -54,7 +54,7 @@ export default {
         // Faz a requisição POST para criar o usuário
         const response = await usuarioApi.post('', this.usuario);
         alert("Usuário criado com sucesso!");
-        this.$router.push({ name: "TelaADM" }); // Redireciona para o Dashboard do Admin
+        this.$router.push({ name: "TelaPrincipal" }); // Redireciona para o Dashboard do Admin
       } catch (error) {
         console.error("Erro ao criar o usuário:", error);
         alert("Erro ao criar o usuário. Tente novamente.");
