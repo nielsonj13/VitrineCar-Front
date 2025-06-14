@@ -70,6 +70,7 @@ export default {
 
       if (!token) {
         this.$router.push("/login"); // 🔴 Redireciona se não estiver logado
+        alert("Você precisa estar logado para acessar essa página.");
         return;
       }
 

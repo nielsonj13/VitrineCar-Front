@@ -278,6 +278,12 @@ export default {
       this.anuncioId = idDaRota;
       this.buscarAnuncio();
     }
+
+    const token = sessionStorage.getItem("authToken");
+    if (!token) {
+      alert("Você precisa estar logado para acessar essa página.");
+      this.$router.push("/login");
+    }
   },
   methods: {
     validarAno(campo) {
@@ -394,7 +400,6 @@ export default {
 
       } catch (error) {
         console.error("Erro ao buscar anúncio:", error);
-        alert("Erro ao buscar o anúncio.");
       }
     },
     async salvarAlteracoes() {
@@ -428,7 +433,7 @@ export default {
         console.log("ID do anúncio para edição:", this.anuncioId);
         await anuncioApi.put(`/${this.anuncioId}`, dadosEnvio);
         alert("Anúncio editado com sucesso!");
-        this.$router.push({ name: "TelaAnuncios" });
+        this.$router.push({ name: "TelaMeusAnuncios" });
       } catch (error) {
         console.error("Erro ao editar anúncio:", error);
         alert("Erro ao editar o anúncio. Tente novamente.");

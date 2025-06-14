@@ -300,6 +300,7 @@ export default {
       const token = sessionStorage.getItem("authToken");
       if (!token) {
         this.$router.push({ name: "TelaLogin" });
+        alert("Você precisa estar logado para acessar essa página.");
         return;
       }
 
