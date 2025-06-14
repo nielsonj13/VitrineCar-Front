@@ -76,7 +76,7 @@ export default {
       try {
         const response = await usuarioApi.get("/logado", {
           headers: {
-            Authorization: `Basic ${token}`
+            Authorization: `Basic ${authToken}`
           }
         });
 
@@ -84,7 +84,7 @@ export default {
         this.buscarAnunciosUsuario();
       } catch (error) {
         console.error("Erro ao buscar usuário logado:", error);
-        this.$router.push("/login"); // 🔴 Redireciona se o token for inválido
+        this.$router.push("/login");
       }
     },
 

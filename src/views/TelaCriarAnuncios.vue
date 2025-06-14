@@ -306,7 +306,7 @@ export default {
 
       try {
         const response = await usuarioApi.get("/logado", {
-          headers: { Authorization: `Basic ${token}` },
+          headers: { Authorization: `Basic ${authToken}` },
         });
         this.usuarioId = response.data.id;
         this.atualizarStatusLimite();
