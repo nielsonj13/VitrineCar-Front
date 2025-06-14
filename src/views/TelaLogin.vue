@@ -36,13 +36,29 @@
               required
             />
           </div>
-
-          <div class="form-actions">
-            <button @click="login" class="btn-action entrar">Entrar</button>
-            <button @click="redirecionarParaCriar" class="btn-action criar">Criar Conta</button>
-          </div>
-
           <p v-if="erro" class="erro-msg">⚠️ {{ erro }}</p>
+          <div class="d-flex flex-column align-items-center mt-4 gap-2">
+
+            <!-- Botão "Entrar" com mais destaque central -->
+            <button @click="login" class="btn-action entrar w-75">
+              Entrar
+            </button>
+
+            <!-- Botões lado a lado -->
+            <div class="d-flex justify-content-center gap-2 mt-2 w-75">
+
+              <!-- Botão "Criar Conta" (maior) -->
+              <button @click="redirecionarParaCriar" class="btn-action criar flex-grow-1">
+                Criar Conta
+              </button>
+
+              <!-- Botão "Voltar para a Página Inicial" (menor) -->
+              <button @click="redirecionarInicial" class="btn-action inicial" style="min-width: 140px;">
+                <i class="bi bi-house-door-fill me-2"></i>
+                Voltar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -97,6 +113,10 @@ export default {
 
     redirecionarParaCriar() {
       this.$router.push({ name: "TelaCriarUsuario" });
+    },
+
+    redirecionarInicial() {
+      this.$router.push({ name: "TelaPrincipal" });
     },
   },
 };
@@ -214,6 +234,10 @@ input:focus {
 
 .btn-action.entrar {
   background-color: #6c3fbc;
+}
+
+.btn-action.inicial {
+  background-color: #2d3436;
 }
 
 .btn-action.criar {
