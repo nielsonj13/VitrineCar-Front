@@ -4,19 +4,8 @@
     <h2>Editar Anúncio</h2>
     <div class="container">
 
-      <!-- Passo 0: informar ID do anúncio -->
-      <div v-if="!anuncioIdInformado" class="content">
-        <label for="anuncioId">Informe o ID do Anúncio:</label>
-        <input
-          type="number"
-          v-model="anuncioId"
-          placeholder="ID do Anúncio"
-        />
-        <button class="btn-next" @click="buscarAnuncio">Buscar Anúncio</button>
-      </div>
-
       <!-- Etapa 1: Dados básicos -->
-      <div v-else-if="etapa === 1" class="content">
+      <div v-if="etapa === 1" class="content">
         <h3>Edite as informações do veículo</h3>
         <div class="form">
           <div class="form-group">
@@ -247,6 +236,7 @@ import { anuncioApi } from "../Services/http.js";
 export default {
   name: "TelaEditarAnuncio",
   components: { Navbar },
+  props: ['id'],
   data() {
     return {
       anuncioId: "",
@@ -281,6 +271,13 @@ export default {
         "Desembaçador Traseiro",
       ],
     };
+  },
+  mounted() {
+    const idDaRota = this.$route.params.id;
+    if (idDaRota) {
+      this.anuncioId = idDaRota;
+      this.buscarAnuncio();
+    }
   },
   methods: {
     validarAno(campo) {
@@ -369,27 +366,22 @@ export default {
       if (this.etapa > 1) this.etapa--;
     },
     async buscarAnuncio() {
-      if (!this.anuncioId) {
-        alert("Informe o ID do anúncio.");
-        return;
-      }
       try {
-        const response = await anuncioApi.get(`/${this.anuncioId}`);
+        const response = await anuncioApi.get(`/${this.id}`);
         this.anuncio = response.data;
-        if (!this.anuncio.imagens || this.anuncio.imagens.length === 0) {
+
+        if (!this.anuncio.imagens || this.anuncio.imagens.length === 0)
           this.anuncio.imagens = [""];
-        }
-        if (!this.anuncio.opcionais) {
+        if (!this.anuncio.opcionais)
           this.anuncio.opcionais = [];
-        }
+
         if (typeof this.anuncio.preco === "number") {
           this.anuncio.preco = new Intl.NumberFormat("pt-BR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }).format(this.anuncio.preco);
-        } else if (!this.anuncio.preco) {
-          this.anuncio.preco = "";
         }
+
         if (this.anuncio.km !== null && this.anuncio.km !== undefined) {
           this.anuncio.km = String(this.anuncio.km);
           this.formatarKm();
@@ -397,16 +389,12 @@ export default {
           this.anuncio.km = "";
         }
 
-        // Aqui garantimos que o usuário fique preservado no objeto
-        if (!this.anuncio.usuario) {
-          this.anuncio.usuario = null; // ou objeto vazio, se preferir
-        }
+        if (!this.anuncio.usuario)
+          this.anuncio.usuario = null;
 
-        this.anuncioIdInformado = true;
-        this.etapa = 1;
       } catch (error) {
         console.error("Erro ao buscar anúncio:", error);
-        alert("Erro ao buscar o anúncio. Verifique o ID e tente novamente.");
+        alert("Erro ao buscar o anúncio.");
       }
     },
     async salvarAlteracoes() {
@@ -437,6 +425,7 @@ export default {
           imagens: this.anuncio.imagens.filter((img) => img.trim() !== ""),
           usuario: this.anuncio.usuario ? { id: this.anuncio.usuario.id } : null,
         };
+        console.log("ID do anúncio para edição:", this.anuncioId);
         await anuncioApi.put(`/${this.anuncioId}`, dadosEnvio);
         alert("Anúncio editado com sucesso!");
         this.$router.push({ name: "TelaAnuncios" });

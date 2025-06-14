@@ -39,9 +39,10 @@ const router = createRouter({
       component: TelaCriarAnuncios,
     },
     {
-      path: '/editaranuncio',
+      path: '/editaranuncio/:id',
       name: 'TelaEditarAnuncios',
       component: TelaEditarAnuncios,
+      props: true
     },
     {
       path: '/meusanuncio',
