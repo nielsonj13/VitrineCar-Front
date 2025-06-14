@@ -297,10 +297,10 @@ export default {
   methods: {
 
     async buscarUsuarioLogado() {
-      const token = sessionStorage.getItem("authToken");
-      if (!token) {
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) {
+        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a página de criar anuncio.");
         this.$router.push({ name: "TelaLogin" });
-        alert("Você precisa estar logado para acessar essa página.");
         return;
       }
 

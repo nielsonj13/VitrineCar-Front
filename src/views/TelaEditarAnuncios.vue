@@ -1,6 +1,9 @@
 <template>
   <div>
     <Navbar />
+    <div v-if="mostrarAlerta" class="alert alert-warning text-center" role="alert">
+      {{ mensagemAlerta }}
+    </div>
     <h2>Editar Anúncio</h2>
     <div class="container">
 
@@ -239,6 +242,8 @@ export default {
   props: ['id'],
   data() {
     return {
+      mensagemAlerta: "",
+      mostrarAlerta: false,
       anuncioId: "",
       anuncio: {
         tipoVeiculo: "",
@@ -279,10 +284,11 @@ export default {
       this.buscarAnuncio();
     }
 
-    const token = sessionStorage.getItem("authToken");
-    if (!token) {
-      alert("Você precisa estar logado para acessar essa página.");
-      this.$router.push("/login");
+    const authToken = sessionStorage.getItem("authToken");
+    if (!authToken) {
+      sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a página de editar anuncio.");
+      this.$router.push({ name: "TelaLogin" });
+      return;
     }
   },
   methods: {

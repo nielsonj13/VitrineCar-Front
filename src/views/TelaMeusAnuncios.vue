@@ -66,11 +66,10 @@ export default {
 
   methods: {
     async buscarUsuarioLogado() {
-      const token = sessionStorage.getItem("authToken");
-
-      if (!token) {
-        this.$router.push("/login"); // 🔴 Redireciona se não estiver logado
-        alert("Você precisa estar logado para acessar essa página.");
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) {
+        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a página meus anuncios.");
+        this.$router.push({ name: "TelaLogin" });
         return;
       }
 

@@ -1,4 +1,11 @@
 <template>
+  <div
+    v-if="mensagemAlerta" class="alert alert-danger alerta-sobreposto text-center" role="alert"
+  >
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {{ mensagemAlerta }}
+  </div>
+
   <div>
     <div class="login-wrapper">
       <div class="login-box">
@@ -50,7 +57,19 @@ export default {
       username: "",
       password: "",
       erro: null,
+      mensagemAlerta: "",
     };
+  },
+  mounted() {
+    const mensagem = sessionStorage.getItem("mensagemAlerta");
+    if (mensagem) {
+      this.mensagemAlerta = mensagem;
+      sessionStorage.removeItem("mensagemAlerta");
+
+      setTimeout(() => {
+      this.mensagemAlerta = "";
+    }, 5000);
+    }
   },
   methods: {
     async login() {
@@ -84,6 +103,20 @@ export default {
 </script>
 
 <style scoped>
+
+.alerta-sobreposto {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  width: 80%;
+  max-width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-size: 1.1rem;
+}
+
+
 .login-wrapper {
   display: flex;
   justify-content: center;
