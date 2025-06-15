@@ -18,7 +18,7 @@
               <div class="title-container">
                 <h3>{{ anuncio.marca }} {{ anuncio.modelo }}</h3>
                 <i
-                  :class="anuncio.favorito ? 'bi bi-star-fill' : 'bi bi-star'"
+                  :class="getClasseFavorito(anuncio)"
                   class="favorite-icon"
                   @click="toggleFavorito(anuncio)"
                 ></i>
@@ -46,10 +46,13 @@ export default {
   components: { Navbar },
   data() {
     return {
-      anuncios: []
+      anuncios: [],
+      logado: false
     };
   },
   async created() {
+    const token = sessionStorage.getItem("authToken");
+    this.logado = !!token;
     await this.buscarAnuncios();
   },
   methods: {
@@ -75,7 +78,20 @@ export default {
       event.target.src = '/logos/logo_vitrinecar.png';
     },
 
+    getClasseFavorito(anuncio) {
+      if (this.logado && anuncio.favorito) {
+        return "bi bi-star-fill";
+      } else {
+        return "bi bi-star";
+      }
+    },
+
     toggleFavorito(anuncio) {
+      if (!this.logado) {
+        alert("Você precisa estar logado para favoritar um anúncio.");
+        return;
+      }
+
       let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
 
       if (favoritos.includes(anuncio.id)) {
@@ -88,7 +104,7 @@ export default {
 
       localStorage.setItem("favoritos", JSON.stringify(favoritos));
 
-      // Força reatividade
+      // Atualiza o array de anúncios para manter reatividade
       this.anuncios = this.anuncios.map(a =>
         a.id === anuncio.id ? { ...a, favorito: anuncio.favorito } : a
       );

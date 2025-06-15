@@ -2,21 +2,17 @@
   <div>
     <Navbar />
     <div class="container" v-if="anuncio">
-      <!-- Carrossel de Imagens -->
       <div class="carrossel-container">
         <button class="nav-button left" @click="anteriorImagem">
           <i class="bi bi-chevron-left"></i>
         </button>
-
         <div class="imagem-principal">
           <img :src="imagemSelecionadaSrc" class="main-image" 
                alt="Imagem do veículo" @click="abrirTelaCheia" @error="imagemErro($event)">
         </div>
-
         <button class="nav-button right" @click="proximaImagem">
           <i class="bi bi-chevron-right"></i>
         </button>
-
         <div class="miniaturas-container">
           <div class="miniaturas">
             <img 
@@ -32,15 +28,12 @@
           </div>
         </div>
       </div>
-
       <div v-if="telaCheiaAtiva" class="modal-fullscreen" @click="fecharTelaCheia">
         <button class="close-button" @click.stop="fecharTelaCheia">×</button>
-        <button class="modal-prev" @click.stop="anteriorImagem">&#10094;</button>
+        <button class="modal-prev" @click.stop="anteriorImagem">❮</button>
         <img :src="imagemSelecionadaSrc" class="fullscreen-image" @error="imagemErro($event)" />
-        <button class="modal-next" @click.stop="proximaImagem">&#10095;</button>
+        <button class="modal-next" @click.stop="proximaImagem">❯</button>
       </div>
-
-      <!-- Informações do Veículo -->
       <div class="vehicle-info">
         <div class="price-title">
           <h1 class="vehicle-title">{{ anuncio.marca }} {{ anuncio.modelo }}</h1>
@@ -53,7 +46,6 @@
             ></i>
           </div>
         </div>
-
         <div class="info-wrapper">
           <div class="info-section">
             <h4>Informações do Veículo</h4>
@@ -78,7 +70,6 @@
               {{ verDescricao ? "Ocultar descrição" : "Ver descrição" }}
             </button>
           </div>
-
           <div class="info-section">
             <h4>Informações do Usuário</h4>
             <p><i class="bi bi-person-circle"></i> <strong>Nome:</strong> {{ anuncio.usuario.nome }}</p>
@@ -89,9 +80,8 @@
         </div>
       </div>
     </div>
-
     <div v-else>
-      <p class="loading">Carregando anúncio...</p>
+      <p class="loading">Carregando anúcio...</p>
     </div>
   </div>
 </template>
@@ -110,6 +100,7 @@ export default {
       miniaturaInicio: 0,
       telaCheiaAtiva: false,
       verDescricao: false,
+      usuarioLogado: false,
     };
   },
   computed: {
@@ -120,6 +111,7 @@ export default {
   created() {
     const anuncioId = this.$route.params.id;
     this.buscarAnuncio(anuncioId);
+    this.usuarioLogado = !!sessionStorage.getItem("authToken");
   },
   mounted() {
     document.addEventListener("keydown", this.tecladoNavegacao);
@@ -137,11 +129,15 @@ export default {
           favorito: favoritos.includes(response.data.id)
         };
       } catch (error) {
-        console.error("Erro ao buscar anúncio:", error);
-        alert("Erro ao carregar os detalhes do anúncio.");
+        console.error("Erro ao buscar anúcio:", error);
+        alert("Erro ao carregar os detalhes do anúcio.");
       }
     },
     toggleFavorito() {
+      if (!this.usuarioLogado) {
+        alert("Você precisa estar logado para favoritar um anúcio.");
+        return;
+      }
       let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
       if (this.anuncio.favorito) {
         favoritos = favoritos.filter(id => id !== this.anuncio.id);
