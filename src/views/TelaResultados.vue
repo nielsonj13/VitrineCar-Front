@@ -1,21 +1,37 @@
 <template>
   <div>
     <Navbar />
+    <div class="container">
+      <div class="content">
+        <h2>Resultados para "{{ termo }}"</h2>
 
-    <!-- Exibição do termo de busca -->
-    <div class="search-container">
-      <h2>Resultados para "{{ termo }}"</h2>
+        <div class="anuncios-container">
+          <div v-for="anuncio in anuncios" :key="anuncio.id" class="card">
+            <img 
+              :src="getImagem(anuncio)" 
+              alt="Imagem do veículo" 
+              @error="imagemErro($event)"
+              class="img-fluid"
+            />
 
-      <!-- Exibição dos anúncios encontrados -->
-      <div v-if="anuncios.length > 0">
-        <div v-for="(anuncio, index) in anuncios" :key="anuncio.id" class="anuncio-item">
-          <h3>{{ anuncio.titulo }}</h3>
-          <p>{{ anuncio.descricao }}</p>
-          <p><strong>Preço:</strong> R$ {{ anuncio.preco }}</p>
+            <div class="car-info">
+              <div class="title-container">
+                <h3>{{ anuncio.marca }} {{ anuncio.modelo }}</h3>
+                <i
+                  :class="getClasseFavorito(anuncio)"
+                  class="favorite-icon"
+                  @click="toggleFavorito(anuncio)"
+                ></i>
+              </div>
+              <p>R$ {{ anuncio.preco }}</p>
+              <span>{{ anuncio.anoFabricacao }}/{{ anuncio.anoModelo }}</span>
+            </div>
+
+            <div class="card-actions">
+              <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div v-else>
-        <p>Nenhum anúncio encontrado.</p>
       </div>
     </div>
   </div>
@@ -23,82 +39,191 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi } from '../Services/http.js'; // Importando a instância do Axios configurada para anúncios
+import { anuncioApi } from '../Services/http.js';
 
 export default {
   name: "TelaResultados",
-  components: {
-    Navbar,
-  },
+  components: { Navbar },
   data() {
     return {
-      termo: this.$route.query.termo || "",  // Obtém o termo da busca passado via query params ou vazio
-      anuncios: [],  // Lista de anúncios que serão exibidos
+      anuncios: [],
+      logado: false,
+      termo: this.$route.query.termo || "",  // Captura o termo da busca
     };
   },
   async created() {
-    // Chama a função para buscar os anúncios ao carregar a tela
+    const token = sessionStorage.getItem("authToken");
+    this.logado = !!token;
     await this.buscarAnuncios();
   },
   methods: {
-    // Função para buscar os anúncios com base no termo
     async buscarAnuncios() {
       try {
-        if (!this.termo.trim()) {
-          // Se o termo estiver vazio, busca todos os anúncios
-          console.log("Buscando todos os anúncios...");
-          const response = await anuncioApi.get('/');  // Faz a requisição sem o parâmetro 'termo'
-          this.anuncios = response.data;
-        } else {
-          // Se o termo não estiver vazio, busca anúncios filtrados
-          console.log("Buscando anúncios para o termo:", this.termo);
-          const response = await anuncioApi.get('/', { params: { termo: this.termo.trim().toLowerCase() } });
-          this.anuncios = response.data;
-        }
+        const response = await anuncioApi.get('/buscar', { params: { termo: this.termo.trim().toLowerCase() } });
+        const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+
+        this.anuncios = response.data.map(anuncio => ({
+          ...anuncio,
+          favorito: favoritos.includes(anuncio.id)
+        }));
       } catch (error) {
         console.error('Erro ao buscar anúncios:', error);
       }
+    },
+
+    getImagem(anuncio) {
+      return anuncio.imagens?.[0] || '/logos/logo_vitrinecar.png';
+    },
+
+    imagemErro(event) {
+      event.target.src = '/logos/logo_vitrinecar.png';
+    },
+
+    getClasseFavorito(anuncio) {
+      if (this.logado && anuncio.favorito) {
+        return "bi bi-star-fill";
+      } else {
+        return "bi bi-star";
+      }
+    },
+
+    toggleFavorito(anuncio) {
+      if (!this.logado) {
+        alert("Você precisa estar logado para favoritar um anúncio.");
+        return;
+      }
+
+      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+
+      if (favoritos.includes(anuncio.id)) {
+        favoritos = favoritos.filter(id => id !== anuncio.id);
+        anuncio.favorito = false;
+      } else {
+        favoritos.push(anuncio.id);
+        anuncio.favorito = true;
+      }
+
+      localStorage.setItem("favoritos", JSON.stringify(favoritos));
+
+      // Atualiza o array de anúncios para manter reatividade
+      this.anuncios = this.anuncios.map(a =>
+        a.id === anuncio.id ? { ...a, favorito: anuncio.favorito } : a
+      );
+    },
+
+    verAnuncio(anuncio) {
+      this.$router.push({ 
+        name: "TelaVeiculo", 
+        params: { id: anuncio.id }
+      });
     }
-  },
+  }
 };
 </script>
 
 <style scoped>
-/* Estilos para a tela de resultados */
-.search-container {
-  padding: 40px;
-  background-color: #FFF;
-  margin: 20px auto;
-  width: 80%;
-  border-radius: 10px;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+.container {
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 20px 0;
 }
 
-.search-container h2 {
-  color: #531B76;
-  font-size: 44px;
+.content {
+  text-align: center;
+}
+
+h2 {
+  color: #5b3199;
   margin-bottom: 20px;
 }
 
-.anuncio-item {
-  margin-bottom: 20px;
-  padding: 20px;
-  background-color: #f9f9f9;
+.anuncios-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #fff;
   border-radius: 10px;
-  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 250px;
+  text-align: center;
+  padding: 15px;
 }
 
-.anuncio-item h3 {
-  color: #531B76;
-  font-size: 28px;
-  margin-bottom: 10px;
+.card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
-.anuncio-item p {
-  font-size: 18px;
+.car-info {
+  text-align: left;
 }
 
-.anuncio-item strong {
+.title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-container h3 {
+  margin: 10px 0;
+  color: #333;
+  flex: 1;
+  text-align: left;
+}
+
+.favorite-icon {
+  cursor: pointer;
+  font-size: 30px;
+  color: #ddd;
+  transition: transform 0.3s ease;
+}
+
+.favorite-icon.bi-star-fill {
+  color: #5b3199;
+}
+
+.favorite-icon:hover {
+  transform: scale(1.2);
+}
+
+.car-info p {
+  margin: 0;
+  color: #5b3199;
   font-weight: bold;
+}
+
+.car-info span {
+  font-size: 14px;
+  color: #666;
+}
+
+.card-actions {
+  margin-top: 10px;
+}
+
+.card-actions button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-ver {
+  background-color: #5b3199;
+  color: white;
+  text-decoration: none;
 }
 </style>

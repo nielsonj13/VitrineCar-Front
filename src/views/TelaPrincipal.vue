@@ -15,6 +15,10 @@
         />
         <button @click="buscarAnuncios(busca)" class="btn btn-primary">Ver Ofertas</button>
       </div>
+      <!-- Mensagem de erro -->
+      <div v-if="mensagemErro" class="alert alert-danger mt-3">
+        {{ mensagemErro }}
+      </div>
     </div>
 
     <!-- Seção de Marcas e Categorias -->
@@ -56,13 +60,14 @@ import Navbar from "../components/NavBar.vue";
 import { anuncioApi } from '../Services/http.js';  // Importando a instância do Axios configurada para anúncios
 
 export default {
-  name: "BuscarVeiculo",
+  name: "TelaPrincipal",
   components: {
     Navbar,
   },
   data() {
     return {
       busca: "",
+      mensagemErro: "", // Mensagem de erro
       marcas: [
         { nome: "Fiat", img: "/logos/FIAT_logo.png" },
         { nome: "BMW", img: "/logos/BMW_logo.png" },
@@ -79,30 +84,40 @@ export default {
     };
   },
   methods: {
-    
     async buscarAnuncios(termo) {
-  try {
-    if (!termo.trim()) {
-      alert("Por favor, insira um termo de busca.");
-      return;
+      try {
+        if (!termo.trim()) {
+          this.mensagemErro = "Por favor, insira um termo de busca.";
+          return;
+        }
+
+        // Exibe no console o termo que está sendo buscado
+        console.log("Buscando anúncios para o termo:", termo);
+
+        // Certifique-se de que a URL está sendo montada corretamente
+        const response = await anuncioApi.get('/buscar', { params: { termo: termo.trim().toLowerCase() } });
+
+        if (response.data.length > 0) {
+          // Redireciona para a tela de resultados passando o termo da busca na query
+          this.$router.push({ name: "TelaResultados", query: { termo: termo.trim().toLowerCase() } });
+        } else {
+          // Caso não haja anúncios, exibe a mensagem de erro
+          this.mensagemErro = "Nenhum anúncio encontrado para sua pesquisa.";
+        }
+      } catch (error) {
+        console.error('Erro ao buscar anúncios:', error);
+        this.mensagemErro = 'Ocorreu um erro ao buscar os anúncios. Tente novamente.';
+      }
     }
-
-    // Exibe no console o termo que está sendo buscado
-    console.log("Buscando anúncios para o termo:", termo);
-
-    // Certifique-se de que a URL está sendo montada corretamente
-    const response = await anuncioApi.get('/', { params: { termo: termo.trim().toLowerCase() } });
-
-    // Redireciona para a tela de resultados passando o termo da busca na query
-    this.$router.push({ name: "TelaResultados", query: { termo: termo.trim().toLowerCase() } });
-
-  } catch (error) {
-    console.error('Erro ao buscar anúncios:', error);
-  }
-}
   },
 };
 </script>
+
+<style scoped>
+/* Estilos gerais (sem alteração) */
+</style>
+
+
 
 <style scoped>
 /* Estilos gerais */
