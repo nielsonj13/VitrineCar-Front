@@ -6,9 +6,8 @@
       <div class="content">
         <h2>Meus Anúncios</h2>
 
-        <!-- Exibição dos anúncios -->
         <div class="anuncios-container">
-          <div v-for="(anuncio, index) in anuncios" :key="anuncio.id" class="card">
+          <div v-for="anuncio in anuncios" :key="anuncio.id" class="card">
             <img 
               :src="getImagem(anuncio)" 
               alt="Imagem do veículo" 
@@ -37,7 +36,6 @@
             </div>
           </div>
 
-          <!-- Card para criar novo anúncio (exibido ao lado dos outros anúncios) -->
           <div class="new-card" @click="criarNovoAnuncio">
             <div class="new-icon">+</div>
             <p>Criar Novo Anúncio</p>
@@ -54,16 +52,13 @@ import { anuncioApi, usuarioApi } from "../Services/http.js";
 
 export default {
   name: "TelaMeusAnuncios",
-  components: {
-    Navbar,
-  },
+  components: { Navbar },
   data() {
     return {
       usuarioId: "",
       anuncios: [],
     };
   },
-
   methods: {
     async buscarUsuarioLogado() {
       const authToken = sessionStorage.getItem("authToken");
@@ -75,9 +70,7 @@ export default {
 
       try {
         const response = await usuarioApi.get("/logado", {
-          headers: {
-            Authorization: `Basic ${authToken}`
-          }
+          headers: { Authorization: `Basic ${authToken}` }
         });
 
         this.usuarioId = response.data.id;
@@ -89,11 +82,14 @@ export default {
     },
 
     async buscarAnunciosUsuario() {
-      if (!this.usuarioId) return;
-
       try {
-        const anunciosResponse = await anuncioApi.get(`/usuario/${this.usuarioId}`);
-        this.anuncios = anunciosResponse.data;
+        const response = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        const favoritosIds = JSON.parse(localStorage.getItem("favoritos") || "[]");
+
+        this.anuncios = response.data.map(anuncio => ({
+          ...anuncio,
+          favorito: favoritosIds.includes(anuncio.id),
+        }));
       } catch (error) {
         console.error("Erro ao buscar anúncios:", error);
         alert("Erro ao buscar anúncios.");
@@ -101,10 +97,7 @@ export default {
     },
 
     getImagem(anuncio) {
-      if (anuncio.imagens?.length > 0) {
-        return anuncio.imagens[0];
-      }
-      return '/logos/logo_vitrinecar.png';
+      return anuncio.imagens?.[0] || '/logos/logo_vitrinecar.png';
     },
 
     imagemErro(event) {
@@ -113,6 +106,15 @@ export default {
 
     toggleFavorito(anuncio) {
       anuncio.favorito = !anuncio.favorito;
+      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+
+      if (anuncio.favorito) {
+        favoritos.push(anuncio.id);
+      } else {
+        favoritos = favoritos.filter(id => id !== anuncio.id);
+      }
+
+      localStorage.setItem("favoritos", JSON.stringify(favoritos));
     },
 
     verAnuncio(anuncio) {
@@ -134,7 +136,7 @@ export default {
     async excluirAnuncio(id) {
       try {
         await anuncioApi.delete(`/${id}`);
-        this.anuncios = this.anuncios.filter(anuncio => anuncio.id !== id);
+        this.anuncios = this.anuncios.filter(a => a.id !== id);
         alert("Anúncio excluído com sucesso!");
       } catch (error) {
         console.error("Erro ao excluir anúncio:", error);
@@ -146,7 +148,6 @@ export default {
       this.$router.push({ name: "TelaCriarAnuncios" });
     }
   },
-
   mounted() {
     this.buscarUsuarioLogado();
   }

@@ -11,6 +11,7 @@ import TelaEditarUsuario from '@/views/TelaEditarUsuario.vue';
 import TelaLogin from '@/views/TelaLogin.vue';
 import TelaVeiculo from '@/views/TelaVeiculo.vue';
 import TelaMinhaConta from '@/views/TelaMinhaConta.vue';
+import TelaFavoritos from '@/views/TelaFavoritos.vue';
 
 // https://vitrinecar-71a27.web.app
 
@@ -79,6 +80,12 @@ const router = createRouter({
       name: 'TelaMinhaConta',
       component: TelaMinhaConta,
     },
+    {
+    path: "/favoritos",
+    name: "TelaFavoritos",
+    component: TelaFavoritos,
+},
+
 
 
   ],
