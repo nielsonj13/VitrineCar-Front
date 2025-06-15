@@ -2,26 +2,21 @@
   <div>
     <Navbar />
     <div class="container" v-if="anuncio">
-      
       <!-- Carrossel de Imagens -->
       <div class="carrossel-container">
-        <!-- Botão Anterior -->
         <button class="nav-button left" @click="anteriorImagem">
           <i class="bi bi-chevron-left"></i>
         </button>
 
-        <!-- Imagem Principal -->
         <div class="imagem-principal">
           <img :src="imagemSelecionadaSrc" class="main-image" 
                alt="Imagem do veículo" @click="abrirTelaCheia" @error="imagemErro($event)">
         </div>
 
-        <!-- Botão Próximo -->
         <button class="nav-button right" @click="proximaImagem">
           <i class="bi bi-chevron-right"></i>
         </button>
 
-        <!-- Miniaturas com rolagem dinâmica limitada -->
         <div class="miniaturas-container">
           <div class="miniaturas">
             <img 
@@ -38,32 +33,28 @@
         </div>
       </div>
 
-      <!-- Modal de Tela Cheia -->
       <div v-if="telaCheiaAtiva" class="modal-fullscreen" @click="fecharTelaCheia">
         <button class="close-button" @click.stop="fecharTelaCheia">×</button>
         <button class="modal-prev" @click.stop="anteriorImagem">&#10094;</button>
-        <img :src="imagemSelecionadaSrc" class="fullscreen-image" @error="imagemErro($event)"/>
+        <img :src="imagemSelecionadaSrc" class="fullscreen-image" @error="imagemErro($event)" />
         <button class="modal-next" @click.stop="proximaImagem">&#10095;</button>
       </div>
 
       <!-- Informações do Veículo -->
       <div class="vehicle-info">
         <div class="price-title">
-          <div>
-            <h1 class="vehicle-title">{{ anuncio.marca }} {{ anuncio.modelo }}</h1>
-          </div>
+          <h1 class="vehicle-title">{{ anuncio.marca }} {{ anuncio.modelo }}</h1>
           <div class="price-container">
             <p class="vehicle-price">R$ {{ anuncio.preco.toFixed(2) }}</p>
-            <i 
-              :class="anuncio.favorito === 'true' ? 'bi bi-star-fill' : 'bi bi-star'" 
-              class="favorite-icon" 
+            <i
+              :class="anuncio.favorito ? 'bi bi-star-fill' : 'bi bi-star'"
+              class="favorite-icon"
               @click="toggleFavorito"
             ></i>
           </div>
         </div>
 
         <div class="info-wrapper">
-          <!-- Informações do Veículo -->
           <div class="info-section">
             <h4>Informações do Veículo</h4>
             <div class="info-grid">
@@ -75,9 +66,8 @@
               <p><i class="bi bi-car-front"></i> <strong>Categoria:</strong> {{ anuncio.categoria || 'Não informado' }}</p>
             </div>
             <p class="options"><strong>Opcionais:</strong> {{ anuncio.opcionais?.length ? anuncio.opcionais.join(', ') : 'Nenhum' }}</p>
-            
             <p class="descricao">
-              <strong>Descrição:</strong> 
+              <strong>Descrição:</strong>
               {{ verDescricao ? (anuncio.descricao || 'Sem descrição disponível.') : (anuncio.descricao ? anuncio.descricao.slice(0, 100) + '...' : 'Sem descrição disponível.') }}
             </p>
             <button 
@@ -89,7 +79,6 @@
             </button>
           </div>
 
-          <!-- Informações do Usuário -->
           <div class="info-section">
             <h4>Informações do Usuário</h4>
             <p><i class="bi bi-person-circle"></i> <strong>Nome:</strong> {{ anuncio.usuario.nome }}</p>
@@ -113,9 +102,7 @@ import { anuncioApi } from "../Services/http.js";
 
 export default {
   name: "TelaVeiculo",
-  components: {
-    Navbar,
-  },
+  components: { Navbar },
   data() {
     return {
       anuncio: null,
@@ -127,11 +114,8 @@ export default {
   },
   computed: {
     imagemSelecionadaSrc() {
-      if (this.anuncio && this.anuncio.imagens && this.anuncio.imagens.length > 0) {
-        return this.anuncio.imagens[this.imagemSelecionada];
-      }
-      return '/logos/logo_vitrinecar.png';
-    }
+      return this.anuncio?.imagens?.[this.imagemSelecionada] || '/logos/logo_vitrinecar.png';
+    },
   },
   created() {
     const anuncioId = this.$route.params.id;
@@ -147,35 +131,40 @@ export default {
     async buscarAnuncio(id) {
       try {
         const response = await anuncioApi.get(`/${id}`);
-        this.anuncio = response.data;
+        const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+        this.anuncio = {
+          ...response.data,
+          favorito: favoritos.includes(response.data.id)
+        };
       } catch (error) {
         console.error("Erro ao buscar anúncio:", error);
         alert("Erro ao carregar os detalhes do anúncio.");
       }
     },
-
+    toggleFavorito() {
+      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+      if (this.anuncio.favorito) {
+        favoritos = favoritos.filter(id => id !== this.anuncio.id);
+        this.anuncio.favorito = false;
+      } else {
+        favoritos.push(this.anuncio.id);
+        this.anuncio.favorito = true;
+      }
+      localStorage.setItem("favoritos", JSON.stringify(favoritos));
+    },
     imagemErro(event) {
       event.target.src = '/logos/logo_vitrinecar.png';
     },
-
     selecionarImagem(index) {
       this.imagemSelecionada = index;
       this.atualizarMiniaturas();
     },
     proximaImagem() {
-      if (this.imagemSelecionada < this.anuncio.imagens.length - 1) {
-        this.imagemSelecionada++;
-      } else {
-        this.imagemSelecionada = 0;
-      }
+      this.imagemSelecionada = (this.imagemSelecionada + 1) % this.anuncio.imagens.length;
       this.atualizarMiniaturas();
     },
     anteriorImagem() {
-      if (this.imagemSelecionada > 0) {
-        this.imagemSelecionada--;
-      } else {
-        this.imagemSelecionada = this.anuncio.imagens.length - 1;
-      }
+      this.imagemSelecionada = (this.imagemSelecionada - 1 + this.anuncio.imagens.length) % this.anuncio.imagens.length;
       this.atualizarMiniaturas();
     },
     atualizarMiniaturas() {
@@ -185,40 +174,26 @@ export default {
         this.miniaturaInicio = this.imagemSelecionada - 3;
       }
     },
-
     abrirTelaCheia() {
       this.telaCheiaAtiva = true;
       document.addEventListener("keydown", this.fecharComEsc);
     },
-
     fecharTelaCheia() {
       this.telaCheiaAtiva = false;
       document.removeEventListener("keydown", this.fecharComEsc);
     },
-
     fecharComEsc(event) {
-      if (event.key === "Escape") {
-        this.fecharTelaCheia();
-      }
+      if (event.key === "Escape") this.fecharTelaCheia();
     },
-
     tecladoNavegacao(event) {
-      if (event.key === "ArrowRight") {
-        this.proximaImagem();
-      } else if (event.key === "ArrowLeft") {
-        this.anteriorImagem();
-      } else if (event.key === "Escape") {
-        this.fecharTelaCheia();
-      }
-    },
-
-    toggleFavorito() {
-      alert("Função para favoritar ainda não implementada.");
+      if (event.key === "ArrowRight") this.proximaImagem();
+      else if (event.key === "ArrowLeft") this.anteriorImagem();
+      else if (event.key === "Escape") this.fecharTelaCheia();
     }
-  },
+  }
 };
 </script>
-
+  
 <style scoped>
 .container {
   max-width: 1200px;
