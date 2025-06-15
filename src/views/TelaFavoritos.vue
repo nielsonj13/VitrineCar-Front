@@ -40,44 +40,22 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi, usuarioApi } from "../Services/http.js";
+import { anuncioApi } from "../Services/http.js";
 
 export default {
   name: "TelaFavoritos",
   components: { Navbar },
   data() {
     return {
-      usuarioId: "",
       favoritos: [],
     };
   },
   methods: {
-    async buscarUsuarioLogado() {
-      const authToken = sessionStorage.getItem("authToken");
-      if (!authToken) {
-        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para ver os favoritos.");
-        this.$router.push({ name: "TelaLogin" });
-        return;
-      }
-
-      try {
-        const response = await usuarioApi.get("/logado", {
-          headers: { Authorization: `Basic ${authToken}` }
-        });
-
-        this.usuarioId = response.data.id;
-        await this.carregarFavoritos();
-      } catch (error) {
-        console.error("Erro ao buscar usuário logado:", error);
-        this.$router.push("/login");
-      }
-    },
-
     async carregarFavoritos() {
       const favoritosIds = JSON.parse(localStorage.getItem("favoritos") || "[]");
 
       try {
-        const response = await anuncioApi.get(`/usuario/${this.usuarioId}`);
+        const response = await anuncioApi.get(""); // Busca todos os anúncios
         this.favoritos = response.data
           .filter(a => favoritosIds.includes(a.id))
           .map(a => ({ ...a, favorito: true }));
@@ -88,14 +66,12 @@ export default {
 
     toggleFavorito(anuncio) {
       anuncio.favorito = !anuncio.favorito;
-
       let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
 
       if (anuncio.favorito) {
         favoritos.push(anuncio.id);
       } else {
         favoritos = favoritos.filter(id => id !== anuncio.id);
-        // remove da tela instantaneamente
         this.favoritos = this.favoritos.filter(a => a.id !== anuncio.id);
       }
 
@@ -111,12 +87,12 @@ export default {
     },
 
     verAnuncio(anuncio) {
-      this.$router.push({ name: "TelaVeiculo", params: { id: anuncio.id, usuarioId: this.usuarioId } });
+      this.$router.push({ name: "TelaVeiculo", params: { id: anuncio.id } });
     }
   },
 
   mounted() {
-    this.buscarUsuarioLogado();
+    this.carregarFavoritos();
   }
 };
 </script>
