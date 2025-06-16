@@ -11,12 +11,14 @@
           v-model="busca" 
           class="form-control" 
           placeholder="Digite marca ou modelo do veículo"
-          @keyup.enter="buscarAnuncios(busca)"  
+          @keyup.enter="buscarAnuncios(busca)"
+           maxlength="100"  
         />
         <button @click="buscarAnuncios(busca)" class="btn btn-primary">Ver Ofertas</button>
       </div>
       <!-- Mensagem de erro -->
-      <div v-if="mensagemErro" class="alert alert-danger mt-3">
+      <div v-if="mensagemErro" class="alert alert-danger mt-3 fade" role="alert">
+        <i class="bi bi-x-circle-fill me-2"></i>
         {{ mensagemErro }}
       </div>
     </div>
@@ -88,6 +90,9 @@ export default {
       try {
         if (!termo.trim()) {
           this.mensagemErro = "Por favor, insira um termo de busca.";
+          setTimeout(() => {
+            this.mensagemErro = ''; // Limpa a mensagem após 3 segundos
+          }, 3000);
           return;
         }
 
@@ -103,21 +108,21 @@ export default {
         } else {
           // Caso não haja anúncios, exibe a mensagem de erro
           this.mensagemErro = "Nenhum anúncio encontrado para sua pesquisa.";
+          setTimeout(() => {
+            this.mensagemErro = ''; // Limpa a mensagem após 3 segundos
+          }, 3000);
         }
       } catch (error) {
         console.error('Erro ao buscar anúncios:', error);
         this.mensagemErro = 'Ocorreu um erro ao buscar os anúncios. Tente novamente.';
+        setTimeout(() => {
+          this.mensagemErro = ''; // Limpa a mensagem após 3 segundos
+        }, 3000);
       }
     }
   },
 };
 </script>
-
-<style scoped>
-/* Estilos gerais (sem alteração) */
-</style>
-
-
 
 <style scoped>
 /* Estilos gerais */
@@ -219,6 +224,16 @@ body {
   font-size: 14px;
   color: #333;
   margin-top: 5px;
+}
+/* Animação de fade-in/fade-out */
+.alert {
+  animation: fadeOut 3s forwards;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* Responsividade */
