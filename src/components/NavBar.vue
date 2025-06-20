@@ -51,7 +51,7 @@
         <router-link to="/meusanuncio" class="dropdown-item">
           <i class="bi bi-house-door"></i> Meus Anúncios
         </router-link>
-        <router-link to="/TelaMinhaConta" class="dropdown-item">
+        <router-link to="/minhaconta" class="dropdown-item">
           <i class="bi bi-person"></i> Minha Conta
         </router-link>
         <button @click="logout" class="dropdown-item logout">
