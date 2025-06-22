@@ -143,10 +143,39 @@ export default {
       ).slice(0, this.limiteAnuncios);
     },
   },
+  mounted() {
+    this.verificarAcessoAdmin();
+  },
   created() {
     this.carregarDados();
   },
   methods: {
+    async verificarAcessoAdmin() {
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) {
+        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a área administrativa.");
+        this.$router.push({ name: "TelaLogin" });
+        return;
+      }
+
+      try {
+        const response = await usuarioApi.get("/logado", {
+          headers: { Authorization: `Basic ${authToken}` }
+        });
+
+        const usuario = response.data;
+
+        if (usuario.role !== "ADMIN") {
+          sessionStorage.setItem("mensagemAlerta", "Acesso restrito à administração.");
+          this.$router.push({ name: "TelaPrincipal" }); // Redireciona para a tela de bloqueios
+        }
+      } catch (error) {
+        console.error("Erro ao verificar acesso admin:", error);
+        sessionStorage.setItem("mensagemAlerta", "Erro ao verificar permissão.");
+        this.$router.push({ name: "TelaPrincipal" });
+      }
+    },
+
     async carregarDados() {
       try {
         const usuariosResponse = await usuarioApi.get('');

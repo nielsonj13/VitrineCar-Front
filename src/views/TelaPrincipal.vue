@@ -1,6 +1,10 @@
 <template>
   <div>
     <Navbar />
+    <div v-if="mensagemAlerta" class="alert alert-danger alerta-sobreposto text-center" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ mensagemAlerta }}
+    </div>
 
     <!-- Área de Busca -->
     <div class="search-container">
@@ -68,6 +72,7 @@ export default {
   },
   data() {
     return {
+      mensagemAlerta: "",
       busca: "",
       mensagemErro: "", // Mensagem de erro
       marcas: [
@@ -84,6 +89,17 @@ export default {
         { nome: "Hatch", img: "/carro/golf.png" },
       ],
     };
+  },
+  mounted() {
+    const mensagem = sessionStorage.getItem("mensagemAlerta");
+    if (mensagem) {
+      this.mensagemAlerta = mensagem;
+      sessionStorage.removeItem("mensagemAlerta");
+
+      setTimeout(() => {
+        this.mensagemAlerta = "";
+      }, 3000);
+    }
   },
   methods: {
     async buscarAnuncios(termo) {
@@ -228,6 +244,18 @@ body {
 /* Animação de fade-in/fade-out */
 .alert {
   animation: fadeOut 3s forwards;
+}
+
+.alerta-sobreposto {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  width: 80%;
+  max-width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  font-size: 1.1rem;
 }
 
 @keyframes fadeOut {
