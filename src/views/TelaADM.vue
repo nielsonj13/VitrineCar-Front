@@ -20,6 +20,7 @@
       <div class="tabs">
         <button :class="{ active: abaAtiva === 'usuarios' }" @click="abaAtiva = 'usuarios'">Usuários</button>
         <button :class="{ active: abaAtiva === 'anuncios' }" @click="abaAtiva = 'anuncios'">Anúncios</button>
+        <button :class="{ active: abaAtiva === 'novoADM'}" @click="abaAtiva = 'novoADM'">Criar ADM</button>
       </div>
 
       <div class="tables">
@@ -96,9 +97,36 @@
           </button>
 
           <button v-if="limiteAnuncios > 10" @click="verMenosAnuncios" class="btn-ver-mais">
-          Ver menos anúncios
-        </button>
+            Ver menos anúncios
+          </button>
+        </div>
 
+        <!-- Formulário para Criar Novo Administrador -->
+        <div v-show="abaAtiva === 'novoADM'" class="form-admin-wrapper">
+          <h3 class="mb-4">Criar Novo Administrador</h3>
+
+          <div v-if="mensagemFeedback" :class="['alert', sucesso ? 'alert-success' : 'alert-danger']">
+            {{ mensagemFeedback }}
+          </div>
+
+          <form @submit.prevent="criarAdmin" class="form-admin">
+            <div class="mb-3">
+              <label for="nome" class="form-label">Nome</label>
+              <input type="text" v-model="novoAdmin.nome" class="form-control" id="nome" placeholder="Digite o nome completo" required />
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" v-model="novoAdmin.email" class="form-control" id="email" placeholder="exemplo@email.com" required />
+            </div>
+            <div class="mb-3">
+              <label for="senha" class="form-label">Senha</label>
+              <input type="password" v-model="novoAdmin.senha" class="form-control" id="senha" placeholder="Senha segura" required />
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">
+              <i class="bi bi-person-plus-fill me-2"></i> Criar Administrador
+            </button>
+          </form>
         </div>
       </div>
     </div>
@@ -123,8 +151,15 @@ export default {
       abaAtiva: 'usuarios',
       buscaUsuario: '',
       buscaAnuncio: '',
-       limiteUsuarios: 10, 
+      limiteUsuarios: 10, 
       limiteAnuncios: 10,
+      novoAdmin: {
+        nome: '',
+        email: '',
+        senha: ''
+      },
+      mensagemFeedback: "",
+      sucesso: false,
     };
   },
   computed: {
@@ -150,6 +185,33 @@ export default {
     this.carregarDados();
   },
   methods: {
+    async criarAdmin() {
+      const authToken = sessionStorage.getItem("authToken");
+      if (!authToken) return;
+
+      if (!this.novoAdmin.nome || !this.novoAdmin.email || !this.novoAdmin.senha) {
+        this.sucesso = false;
+        this.mensagemFeedback = "Preencha todos os campos.";
+        return;
+      }
+
+      try {
+        await usuarioApi.post("/admin-criar", this.novoAdmin, {
+          headers: { Authorization: `Basic ${authToken}` }
+        });
+
+        this.sucesso = true;
+        this.mensagemFeedback = "Administrador criado com sucesso!";
+        this.novoAdmin = { nome: '', email: '', senha: '' };
+        this.carregarDados(); // atualiza a lista
+        setTimeout(() => this.mensagemFeedback = "", 5000);
+      } catch (error) {
+        this.sucesso = false;
+        this.mensagemFeedback = "Erro ao criar administrador. Verifique se o e-mail já existe.";
+        setTimeout(() => this.mensagemFeedback = "", 5000);
+      }
+    },
+
     async verificarAcessoAdmin() {
       const authToken = sessionStorage.getItem("authToken");
       if (!authToken) {
@@ -412,6 +474,73 @@ button:hover {
 
 table tr td button {
   margin-right: 5px;
+}
+/* Estilo geral do card de criação de admin */
+.form-admin-wrapper {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 30px 25px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  border-left: 6px solid #4a1c6e;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Estilo do título */
+.form-admin-wrapper h3 {
+  text-align: center;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+/* Campos do formulário */
+.form-admin .form-control {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1px solid #ced4da;
+  transition: border-color 0.2s;
+}
+
+.form-admin .form-control:focus {
+  border-color: #4a1c6e;
+  box-shadow: 0 0 0 0.15rem rgba(40, 167, 69, 0.25);
+}
+
+/* Botão estilizado */
+.form-admin .btn-success {
+  padding: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 8px;
+  background-color: #4a1c6e;
+  border: none;
+  transition: background-color 0.3s;
+}
+
+.form-admin .btn-success:hover {
+  background-color: #4a1c6e;
+}
+
+/* Mensagens de alerta */
+.alert {
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Suaviza a exibição */
+.fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
