@@ -58,7 +58,7 @@
           <i class="bi bi-person"></i> Minha Conta
         </router-link>
         <router-link v-if="isAdmin" to="/adm" class="dropdown-item">
-          <i class="bi bi-shield-lock-fill"></i> Painel Admin
+          <i class="bi bi-shield-lock"></i> Painel Admin
         </router-link>
         <button @click="logout" class="dropdown-item logout">
           <i class="bi bi-box-arrow-right"></i> Sair
