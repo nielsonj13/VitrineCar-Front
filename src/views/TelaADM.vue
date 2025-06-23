@@ -21,6 +21,7 @@
         <button :class="{ active: abaAtiva === 'usuarios' }" @click="abaAtiva = 'usuarios'">Usuários</button>
         <button :class="{ active: abaAtiva === 'anuncios' }" @click="abaAtiva = 'anuncios'">Anúncios</button>
         <button :class="{ active: abaAtiva === 'novoADM'}" @click="abaAtiva = 'novoADM'">Criar ADM</button>
+        <button :class="{ active: abaAtiva === 'denuncias'}" @click="abaAtiva = 'denuncias'">Denuncias</button>
       </div>
 
       <div class="tables">
@@ -128,6 +129,47 @@
             </button>
           </form>
         </div>
+
+        <!-- Tabela de Denúncias -->
+        <div v-show="abaAtiva === 'denuncias'" class="table-container">
+          <h3>Denúncias</h3>
+          <input type="text" v-model="buscaDenuncia" placeholder="Buscar por nome, email ou motivo..." class="input-busca" />
+
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Motivo</th>
+                <th>Anúncio</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="denuncia in denunciasFiltradas" :key="denuncia.id">
+                <td>{{ denuncia.id }}</td>
+                <td>{{ denuncia.nome }}</td>
+                <td>{{ denuncia.email }}</td>
+                <td>{{ denuncia.motivo }}</td>
+                <td>#{{ denuncia.anuncio?.id }} - {{ denuncia.anuncio?.modelo }}</td>
+                <td>
+                  <button class="btn-ver" @click="verAnuncio(denuncia.anuncio)">Ver Anúncio</button>
+                  <button class="btn-excluir" @click="confirmarExclusaoDenuncia(denuncia.id)">Excluir</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <button v-if="denunciasFiltradas.length < denuncias.length" @click="verMaisDenuncias" class="btn-ver-mais">
+            Ver mais denúncias
+          </button>
+
+          <button v-if="limiteDenuncias > 10" @click="verMenosDenuncias" class="btn-ver-mais">
+            Ver menos denúncias
+          </button>
+
+        </div>
       </div>
     </div>
   </div>
@@ -135,7 +177,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { usuarioApi, anuncioApi } from "../Services/http.js";
+import { usuarioApi, anuncioApi, denunciaApi } from "../Services/http.js";
 
 export default {
   name: "TelaAdmin",
@@ -146,13 +188,16 @@ export default {
     return {
       usuarios: [],
       anuncios: [],
+      denuncias: [],
       totalUsuarios: 0,
       totalAnuncios: 0,
       abaAtiva: 'usuarios',
       buscaUsuario: '',
       buscaAnuncio: '',
+      buscaDenuncia: "",
       limiteUsuarios: 10, 
       limiteAnuncios: 10,
+      limiteDenuncias: 10,
       novoAdmin: {
         nome: '',
         email: '',
@@ -177,6 +222,13 @@ export default {
         anuncio.modelo.toLowerCase().includes(termo)
       ).slice(0, this.limiteAnuncios);
     },
+    denunciasFiltradas() {
+      return this.denuncias
+        .filter(d => d.nome.toLowerCase().includes(this.buscaDenuncia.toLowerCase()) ||
+                    d.email.toLowerCase().includes(this.buscaDenuncia.toLowerCase()) ||
+                    d.motivo.toLowerCase().includes(this.buscaDenuncia.toLowerCase()))
+        .slice(0, this.limiteDenuncias);
+    }
   },
   mounted() {
     this.verificarAcessoAdmin();
@@ -247,6 +299,9 @@ export default {
         const anunciosResponse = await anuncioApi.get('');
         this.anuncios = anunciosResponse.data;
         this.totalAnuncios = this.anuncios.length;
+
+        const denunciasResponse = await denunciaApi.get('');
+        this.denuncias = denunciasResponse.data;
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
       }
@@ -264,6 +319,12 @@ export default {
     verMenosAnuncios() {
       this.limiteAnuncios = Math.max(10, this.limiteAnuncios - 10);
     },
+    verMaisDenuncias() {
+      this.limiteDenuncias += 10;
+    },
+    verMenosDenuncias() {
+      this.limiteDenuncias = 10;
+    },
 
     async confirmarExclusaoUsuario(id) {
       const confirmacao = window.confirm('Tem certeza que deseja excluir este usuário? Ao excluir o usuário todos os dados vinculados a ele serão excluidos juntos.');
@@ -276,6 +337,12 @@ export default {
       const confirmacao = window.confirm('Tem certeza que deseja excluir este anúncio?');
       if (confirmacao) {
         this.excluirAnuncio(id);
+      }
+    },
+
+    confirmarExclusaoDenuncia(id) {
+      if (confirm("Tem certeza que deseja excluir esta denúncia?")) {
+        this.excluirDenuncia(id);
       }
     },
 
@@ -316,6 +383,17 @@ export default {
         console.error("Erro ao excluir o anúncio:", error);
       }
     },
+
+    async excluirDenuncia(id) {
+      try {
+        await denunciaApi.delete(`/${id}`);
+        this.denuncias = this.denuncias.filter(d => d.id !== id);
+        alert("Denúncia excluída com sucesso.");
+      } catch (e) {
+        alert("Erro ao excluir denúncia.");
+      }
+    },
+    
     verAnuncio(anuncio) {
       // Passando os dados do anúncio para a TelaVeiculo
       this.$router.push({ 
