@@ -32,6 +32,9 @@
           <router-link to="/TelaMinhaConta" class="dropdown-item">
             <i class="bi bi-person"></i> Minha Conta
           </router-link>
+          <router-link v-if="isAdmin" to="/adm" class="dropdown-item">
+            <i class="bi bi-shield-lock-fill"></i> Painel Admin
+          </router-link>
           <button @click="logout" class="dropdown-item logout">
             <i class="bi bi-box-arrow-right"></i> Sair
           </button>
@@ -53,6 +56,9 @@
         </router-link>
         <router-link to="/minhaconta" class="dropdown-item">
           <i class="bi bi-person"></i> Minha Conta
+        </router-link>
+        <router-link v-if="isAdmin" to="/adm" class="dropdown-item">
+          <i class="bi bi-shield-lock-fill"></i> Painel Admin
         </router-link>
         <button @click="logout" class="dropdown-item logout">
           <i class="bi bi-box-arrow-right"></i> Sair
@@ -78,7 +84,11 @@ export default {
       mobileView: window.innerWidth <= 768,
     };
   },
-
+  computed: {
+    isAdmin() {
+      return this.usuario?.role === "ADMIN";
+    }
+  },
   methods: {
     checkMobileView() {
       this.mobileView = window.innerWidth <= 768;
