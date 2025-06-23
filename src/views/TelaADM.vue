@@ -85,7 +85,7 @@
                 <td>{{ anuncio.usuario.id }}</td>
                 <td>{{ anuncio.usuario.nome }}</td>
                 <td>
-                   <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
+                  <button class="btn-ver" @click="verAnuncio(anuncio)">Ver anúncio</button>
                   <button class="btn-editar" @click="editarAnuncio(anuncio.id)">Editar</button>
                   <button  class="btn-excluir" @click="confirmarExclusaoAnuncio(anuncio.id)">Excluir</button>
                 </td>
@@ -139,8 +139,7 @@
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Nome</th>
-                <th>Email</th>
+                <th>Nome do denunciante</th>
                 <th>Motivo</th>
                 <th>Anúncio</th>
                 <th>Ações</th>
@@ -150,11 +149,11 @@
               <tr v-for="denuncia in denunciasFiltradas" :key="denuncia.id">
                 <td>{{ denuncia.id }}</td>
                 <td>{{ denuncia.nome }}</td>
-                <td>{{ denuncia.email }}</td>
                 <td>{{ denuncia.motivo }}</td>
                 <td>#{{ denuncia.anuncio?.id }} - {{ denuncia.anuncio?.modelo }}</td>
                 <td>
-                  <button class="btn-ver" @click="verAnuncio(denuncia.anuncio)">Ver Anúncio</button>
+                  <button class="bnt-expnadir" @click="abrirModalDenuncia(denuncia)">Expandir denúncia</button>
+                  <button class="btn-ver" @click="verAnuncio(denuncia.anuncio)">Ver anúncio</button>
                   <button class="btn-excluir" @click="confirmarExclusaoDenuncia(denuncia.id)">Excluir</button>
                 </td>
               </tr>
@@ -170,6 +169,48 @@
           </button>
 
         </div>
+
+        <!-- Modal de Detalhes da Denúncia -->
+        <div v-if="modalDenunciaAberto" class="modal-overlay">
+          <div class="modal-content">
+            <h4>Detalhes da Denúncia</h4>
+            <p><strong>ID:</strong> {{ denunciaSelecionada.id }}</p>
+            <p><strong>Nome do denunciante:</strong> {{ denunciaSelecionada.nome }}</p>
+            <p><strong>Email:</strong> {{ denunciaSelecionada.email }}</p>
+            <p><strong>Motivo:</strong> {{ denunciaSelecionada.motivo }}</p>
+            <p><strong>Detalhes:</strong> {{ verDetalhes ? denunciaSelecionada.detalhes : (denunciaSelecionada.detalhes?.slice(0, 100) + '...') }}</p>
+            <button
+              v-if="denunciaSelecionada.detalhes && denunciaSelecionada.detalhes.length > 100"
+              @click="verDetalhes = !verDetalhes"
+              class="descricao-btn">
+              {{ verDetalhes ? "Ocultar detalhes" : "Ver mais" }}
+            </button>
+            <hr>
+
+            <div class="modal-columns">
+              <!-- Anúncio -->
+              <div class="modal-box">
+                <h5>Anúncio Denunciado</h5>
+                <p><strong>ID:</strong> {{ denunciaSelecionada.anuncio?.id }}</p>
+                <p><strong>Marca:</strong> {{ denunciaSelecionada.anuncio?.marca }}</p>
+                <p><strong>Modelo:</strong> {{ denunciaSelecionada.anuncio?.modelo }}</p>
+                <p><strong>Preço:</strong> R$ {{ denunciaSelecionada.anuncio?.preco }}</p>
+              </div>
+
+              <!-- Usuário dono -->
+              <div class="modal-box">
+                <h5>Responsavel pelo Anúncio</h5>
+                <p><strong>Nome:</strong> {{ denunciaSelecionada.anuncio?.usuario?.nome }}</p>
+                <p><strong>Email:</strong> {{ denunciaSelecionada.anuncio?.usuario?.email }}</p>
+                <p><strong>Telefone:</strong> {{ denunciaSelecionada.anuncio?.usuario?.telefone }}</p>
+                <p><strong>Localização:</strong> {{ denunciaSelecionada.anuncio?.usuario?.localizacao }}</p>
+              </div>
+            </div>
+
+            <button @click="fecharModalDenuncia" class="btn-fechar">Fechar</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -205,6 +246,10 @@ export default {
       },
       mensagemFeedback: "",
       sucesso: false,
+      denunciaSelecionada: null,
+      modalDenunciaAberto: false,
+      denunciaSelecionada: null,
+      verDetalhes: false,
     };
   },
   computed: {
@@ -401,6 +446,21 @@ export default {
         params: { id: anuncio.id, usuarioId: this.usuarioId }
       });  // Redireciona para a TelaVeiculo com os parâmetros necessários
     },
+
+    abrirModalDenuncia(denuncia) {
+      this.denunciaSelecionada = denuncia;
+      this.modalDenunciaAberto = true;
+    },
+    fecharModalDenuncia() {
+      this.modalDenunciaAberto = false;
+      this.denunciaSelecionada = null;
+    },
+    abrirModalDenunciaInfo(denuncia) {
+      this.denunciaSelecionada = denuncia;
+      this.verDetalhes = false;
+      this.modalAberto = true;
+    }
+
   },
 };
 </script>
@@ -467,6 +527,7 @@ export default {
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  color: #5b3199;;
 }
 
 .tabs button.active {
@@ -526,6 +587,15 @@ button:hover {
 
 .btn-add:hover {
   background-color: #218838;
+}
+
+.bnt-expnadir {
+  background-color: #007bff;
+  color: white;
+}
+
+.bnt-expnadir:hover {
+  background-color: #0056b3;
 }
 
 .btn-excluir {
@@ -615,6 +685,57 @@ table tr td button {
 .fade-in {
   animation: fadeIn 0.4s ease-in-out;
 }
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 900px;
+}
+.btn-fechar {
+  margin-top: 15px;
+  background:  #5b3199;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-columns {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 15px;
+}
+.modal-box {
+  flex: 1;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+
+.descricao-btn {
+  background: none;
+  border: none;
+  color: #5b3199;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 5px;
+  font-weight: bold;
+}
+
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
