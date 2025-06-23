@@ -1,52 +1,58 @@
 <template>
   <div>
     <Navbar />
+    
     <div class="container" v-if="anuncio">
+      <!-- Carrossel de Imagens -->
       <div class="carrossel-container">
         <button class="nav-button left" @click="anteriorImagem">
           <i class="bi bi-chevron-left"></i>
         </button>
+
         <div class="imagem-principal">
-          <img :src="imagemSelecionadaSrc" class="main-image" 
+          <img :src="imagemSelecionadaSrc" class="main-image"
                alt="Imagem do veículo" @click="abrirTelaCheia" @error="imagemErro($event)">
         </div>
+
         <button class="nav-button right" @click="proximaImagem">
           <i class="bi bi-chevron-right"></i>
         </button>
+
         <div class="miniaturas-container">
           <div class="miniaturas">
-            <img 
-              v-for="(imagem, index) in anuncio.imagens.slice(miniaturaInicio, miniaturaInicio + 4)" 
+            <img v-for="(imagem, index) in anuncio.imagens.slice(miniaturaInicio, miniaturaInicio + 4)"
               :key="'thumb-' + (miniaturaInicio + index)"
-              :src="imagem" 
-              class="miniatura img-thumbnail" 
-              @click="selecionarImagem(miniaturaInicio + index)" 
+              :src="imagem"
+              class="miniatura img-thumbnail"
+              @click="selecionarImagem(miniaturaInicio + index)"
               :class="{ active: (miniaturaInicio + index) === imagemSelecionada }"
-              @error="imagemErro($event)" 
-              alt="Miniatura do veículo"
-            >
+              @error="imagemErro($event)" />
           </div>
         </div>
       </div>
+
+      <!-- Modal de imagem cheia -->
       <div v-if="telaCheiaAtiva" class="modal-fullscreen" @click="fecharTelaCheia">
         <button class="close-button" @click.stop="fecharTelaCheia">×</button>
         <button class="modal-prev" @click.stop="anteriorImagem">❮</button>
         <img :src="imagemSelecionadaSrc" class="fullscreen-image" @error="imagemErro($event)" />
         <button class="modal-next" @click.stop="proximaImagem">❯</button>
       </div>
+
+      <!-- Informações do Veículo e Usuário -->
       <div class="vehicle-info">
         <div class="price-title">
           <h1 class="vehicle-title">{{ anuncio.marca }} {{ anuncio.modelo }}</h1>
           <div class="price-container">
             <p class="vehicle-price">R$ {{ anuncio.preco.toFixed(2) }}</p>
-            <i
-              :class="anuncio.favorito ? 'bi bi-star-fill' : 'bi bi-star'"
-              class="favorite-icon"
-              @click="toggleFavorito"
-            ></i>
+            <i :class="anuncio.favorito ? 'bi bi-star-fill' : 'bi bi-star'"
+               class="favorite-icon"
+               @click="toggleFavorito"></i>
           </div>
         </div>
+
         <div class="info-wrapper">
+          <!-- Informações do Veículo -->
           <div class="info-section">
             <h4>Informações do Veículo</h4>
             <div class="info-grid">
@@ -57,38 +63,75 @@
               <p><i class="bi bi-fuel-pump"></i> <strong>Combustível:</strong> {{ anuncio.combustivel || 'Não informado' }}</p>
               <p><i class="bi bi-car-front"></i> <strong>Categoria:</strong> {{ anuncio.categoria || 'Não informado' }}</p>
             </div>
+
             <p class="options"><strong>Opcionais:</strong> {{ anuncio.opcionais?.length ? anuncio.opcionais.join(', ') : 'Nenhum' }}</p>
             <p class="descricao">
               <strong>Descrição:</strong>
               {{ verDescricao ? (anuncio.descricao || 'Sem descrição disponível.') : (anuncio.descricao ? anuncio.descricao.slice(0, 100) + '...' : 'Sem descrição disponível.') }}
             </p>
-            <button 
-              v-if="anuncio.descricao && anuncio.descricao.length > 100" 
-              @click="verDescricao = !verDescricao" 
-              class="descricao-btn"
-            >
+
+            <button v-if="anuncio.descricao && anuncio.descricao.length > 100"
+              @click="verDescricao = !verDescricao"
+              class="descricao-btn">
               {{ verDescricao ? "Ocultar descrição" : "Ver descrição" }}
             </button>
+              
           </div>
+
+          <!-- Informações do Usuário -->
           <div class="info-section">
             <h4>Informações do Usuário</h4>
-            <p><i class="bi bi-person-circle"></i> <strong>Nome:</strong> {{ anuncio.usuario.nome }}</p>
-            <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ anuncio.usuario.email }}</p>
-            <p><i class="bi bi-telephone"></i> <strong>Telefone:</strong> {{ anuncio.usuario.telefone }}</p>
-            <p><i class="bi bi-geo-alt"></i> <strong>Localização:</strong> {{ anuncio.usuario.localizacao }}</p>
+            <p class="seller-name"><i class="bi bi-person-circle"></i> {{ anuncio.usuario.nome }}</p>
+            <div class="contact-info">
+              <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ anuncio.usuario.email }}</p>
+              <p><i class="bi bi-telephone"></i> <strong>Telefone:</strong> {{ anuncio.usuario.telefone }}</p>
+              <p><i class="bi bi-geo-alt"></i> <strong>Localização:</strong> {{ anuncio.usuario.localizacao }}</p>
+              </div>
           </div>
         </div>
+        <!-- Link discreto para denúncia -->
+        <a href="#" class="denunciar-link" @click.prevent="abrirModalDenuncia = true">
+          <i class="bi bi-flag-fill me-1"></i> Denunciar
+        </a>
       </div>
     </div>
+    
+
     <div v-else>
-      <p class="loading">Carregando anúcio...</p>
+      <p class="loading">Carregando anúncio...</p>
     </div>
+
+    <!-- Modal de Denúncia -->
+    <div v-if="abrirModalDenuncia" class="fixed">
+      <div class="modal-content">
+        <button @click="abrirModalDenuncia = false" class="modal-close">&times;</button>
+
+        <h2>Denunciar Anúncio</h2>
+
+        <input v-model="denuncia.nome" placeholder="Seu nome" />
+        <input v-model="denuncia.email" type="email" placeholder="Seu e-mail" />
+
+        <select v-model="denuncia.motivo">
+          <option disabled value="">Selecione o motivo</option>
+          <option>Fraude</option>
+          <option>Informações falsas</option>
+          <option>Conteúdo impróprio</option>
+          <option>Outro</option>
+        </select>
+
+        <textarea v-model="denuncia.detalhes" placeholder="Descreva o que aconteceu" rows="4"></textarea>
+
+        <button @click="enviarDenuncia" class="btn-enviar">Enviar denúncia</button>
+      </div>
+    </div>
+
   </div>
 </template>
 
+
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi } from "../Services/http.js";
+import { anuncioApi, denunciaApi } from "../Services/http.js";
 
 export default {
   name: "TelaVeiculo",
@@ -101,6 +144,13 @@ export default {
       telaCheiaAtiva: false,
       verDescricao: false,
       usuarioLogado: false,
+      abrirModalDenuncia: false,
+      denuncia: {
+        nome: '',
+        email: '',
+        motivo: '',
+        detalhes: '',
+      }
     };
   },
   computed: {
@@ -120,6 +170,22 @@ export default {
     document.removeEventListener("keydown", this.tecladoNavegacao);
   },
   methods: {
+    async enviarDenuncia() {
+      try {
+        const payload = {
+          ...this.denuncia,
+          anuncio: { id: this.anuncio.id },
+        };
+
+        await denunciaApi.post("", payload);
+        alert("Denúncia enviada com sucesso!");
+        this.abrirModalDenuncia = false;
+        this.denuncia = { nome: '', email: '', motivo: '', detalhes: '' };
+      } catch (error) {
+        console.error("Erro ao enviar denúncia:", error);
+        alert("Erro ao enviar denúncia. Verifique os dados ou tente novamente.");
+      }
+    },
     async buscarAnuncio(id) {
       try {
         const response = await anuncioApi.get(`/${id}`);
@@ -284,8 +350,6 @@ export default {
   right: -40px;
 }
 
-
-
 .miniaturas {
   display: flex;
   flex-direction: column;
@@ -418,6 +482,119 @@ i {
 .descricao-btn:hover {
   text-decoration: underline;
 }
+
+.fixed {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  padding: 30px 25px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  position: relative;
+  font-family: 'Segoe UI', sans-serif;
+  animation: fadeInScale 0.3s ease;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-content h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: border 0.3s;
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+  border-color: #531B76;
+  outline: none;
+}
+
+.btn-enviar {
+  background: #531B76;
+  color: white;
+  padding: 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s;
+}
+
+.btn-enviar:hover {
+  background: #3e1156;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  font-size: 28px;
+  color: #999;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+.vehicle-info {
+  position: relative;
+  padding-bottom: 40px; /* espaço para o link não sobrepor conteúdo */
+}
+
+.denunciar-link {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  font-size: 0.85rem;
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.2s ease-in-out;
+}
+
+.denunciar-link:hover {
+  color: #dc3545;
+  text-decoration: underline;
+}
+
 
 @media (max-width: 768px) {
   .container {

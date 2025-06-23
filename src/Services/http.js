@@ -16,6 +16,14 @@ const anuncioApi = axios.create({
   },
 });
 
+// API para Denúncias
+const denunciaApi = axios.create({
+  baseURL: 'http://localhost:8080/denuncias',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Interceptor para adicionar o header Authorization em todas as requisições
 const addAuthInterceptor = (apiInstance) => {
   apiInstance.interceptors.request.use(config => {
@@ -29,5 +37,6 @@ const addAuthInterceptor = (apiInstance) => {
 
 addAuthInterceptor(usuarioApi);
 addAuthInterceptor(anuncioApi);
+addAuthInterceptor(denunciaApi);
 
-export { usuarioApi, anuncioApi };
+export { usuarioApi, anuncioApi, denunciaApi };
