@@ -24,7 +24,15 @@ const denunciaApi = axios.create({
   },
 });
 
-// Interceptor para adicionar o header Authorization em todas as requisições
+// API para Favoritos
+const favoritoApi = axios.create({
+  baseURL: 'http://localhost:8080/favoritos',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para adicionar o token em todas as requisições
 const addAuthInterceptor = (apiInstance) => {
   apiInstance.interceptors.request.use(config => {
     const token = sessionStorage.getItem("authToken");
@@ -38,5 +46,6 @@ const addAuthInterceptor = (apiInstance) => {
 addAuthInterceptor(usuarioApi);
 addAuthInterceptor(anuncioApi);
 addAuthInterceptor(denunciaApi);
+addAuthInterceptor(favoritoApi);
 
-export { usuarioApi, anuncioApi, denunciaApi };
+export { usuarioApi, anuncioApi, denunciaApi, favoritoApi };

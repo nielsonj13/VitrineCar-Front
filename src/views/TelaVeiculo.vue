@@ -1,23 +1,19 @@
 <template>
   <div>
     <Navbar />
-    
     <div class="container" v-if="anuncio">
       <!-- Carrossel de Imagens -->
       <div class="carrossel-container">
         <button class="nav-button left" @click="anteriorImagem">
           <i class="bi bi-chevron-left"></i>
         </button>
-
         <div class="imagem-principal">
           <img :src="imagemSelecionadaSrc" class="main-image"
                alt="Imagem do veículo" @click="abrirTelaCheia" @error="imagemErro($event)">
         </div>
-
         <button class="nav-button right" @click="proximaImagem">
           <i class="bi bi-chevron-right"></i>
         </button>
-
         <div class="miniaturas-container">
           <div class="miniaturas">
             <img v-for="(imagem, index) in anuncio.imagens.slice(miniaturaInicio, miniaturaInicio + 4)"
@@ -30,7 +26,6 @@
           </div>
         </div>
       </div>
-
       <!-- Modal de imagem cheia -->
       <div v-if="telaCheiaAtiva" class="modal-fullscreen" @click="fecharTelaCheia">
         <button class="close-button" @click.stop="fecharTelaCheia">×</button>
@@ -38,8 +33,7 @@
         <img :src="imagemSelecionadaSrc" class="fullscreen-image" @error="imagemErro($event)" />
         <button class="modal-next" @click.stop="proximaImagem">❯</button>
       </div>
-
-      <!-- Informações do Veículo e Usuário -->
+      <!-- Info Veículo e Usuário -->
       <div class="vehicle-info">
         <div class="price-title">
           <h1 class="vehicle-title">{{ anuncio.marca }} {{ anuncio.modelo }}</h1>
@@ -50,9 +44,7 @@
                @click="toggleFavorito"></i>
           </div>
         </div>
-
         <div class="info-wrapper">
-          <!-- Informações do Veículo -->
           <div class="info-section">
             <h4>Informações do Veículo</h4>
             <div class="info-grid">
@@ -63,22 +55,17 @@
               <p><i class="bi bi-fuel-pump"></i> <strong>Combustível:</strong> {{ anuncio.combustivel || 'Não informado' }}</p>
               <p><i class="bi bi-car-front"></i> <strong>Categoria:</strong> {{ anuncio.categoria || 'Não informado' }}</p>
             </div>
-
             <p class="options"><strong>Opcionais:</strong> {{ anuncio.opcionais?.length ? anuncio.opcionais.join(', ') : 'Nenhum' }}</p>
             <p class="descricao">
               <strong>Descrição:</strong>
               {{ verDescricao ? (anuncio.descricao || 'Sem descrição disponível.') : (anuncio.descricao ? anuncio.descricao.slice(0, 100) + '...' : 'Sem descrição disponível.') }}
             </p>
-
             <button v-if="anuncio.descricao && anuncio.descricao.length > 100"
               @click="verDescricao = !verDescricao"
               class="descricao-btn">
               {{ verDescricao ? "Ocultar descrição" : "Ver descrição" }}
             </button>
-              
           </div>
-
-          <!-- Informações do Usuário -->
           <div class="info-section">
             <h4>Informações do Usuário</h4>
             <p class="seller-name"><i class="bi bi-person-circle"></i> {{ anuncio.usuario.nome }}</p>
@@ -86,31 +73,24 @@
               <p><i class="bi bi-envelope"></i> <strong>Email:</strong> {{ anuncio.usuario.email }}</p>
               <p><i class="bi bi-telephone"></i> <strong>Telefone:</strong> {{ anuncio.usuario.telefone }}</p>
               <p><i class="bi bi-geo-alt"></i> <strong>Localização:</strong> {{ anuncio.usuario.localizacao }}</p>
-              </div>
+            </div>
           </div>
         </div>
-        <!-- Link discreto para denúncia -->
         <a href="#" class="denunciar-link" @click.prevent="abrirModalDenuncia = true">
           <i class="bi bi-flag-fill me-1"></i> Denunciar
         </a>
       </div>
     </div>
-    
-
     <div v-else>
       <p class="loading">Carregando anúncio...</p>
     </div>
-
-    <!-- Modal de Denúncia -->
+    <!-- Modal Denúncia -->
     <div v-if="abrirModalDenuncia" class="fixed">
       <div class="modal-content">
         <button @click="abrirModalDenuncia = false" class="modal-close">&times;</button>
-
         <h2>Denunciar Anúncio</h2>
-
         <input v-model="denuncia.nome" placeholder="Seu nome" />
         <input v-model="denuncia.email" type="email" placeholder="Seu e-mail" />
-
         <select v-model="denuncia.motivo">
           <option disabled value="">Selecione o motivo</option>
           <option>Fraude</option>
@@ -118,20 +98,16 @@
           <option>Conteúdo impróprio</option>
           <option>Outro</option>
         </select>
-
         <textarea v-model="denuncia.detalhes" placeholder="Descreva o que aconteceu" rows="4"></textarea>
-
         <button @click="enviarDenuncia" class="btn-enviar">Enviar denúncia</button>
       </div>
     </div>
-
   </div>
 </template>
 
-
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi, denunciaApi } from "../Services/http.js";
+import { anuncioApi, denunciaApi, favoritoApi, usuarioApi } from "../Services/http.js";
 
 export default {
   name: "TelaVeiculo",
@@ -143,14 +119,15 @@ export default {
       miniaturaInicio: 0,
       telaCheiaAtiva: false,
       verDescricao: false,
-      usuarioLogado: false,
       abrirModalDenuncia: false,
       denuncia: {
         nome: '',
         email: '',
         motivo: '',
         detalhes: '',
-      }
+      },
+      usuarioId: null,
+      authToken: null,
     };
   },
   computed: {
@@ -160,8 +137,11 @@ export default {
   },
   created() {
     const anuncioId = this.$route.params.id;
+    this.authToken = sessionStorage.getItem("authToken");
+    if (this.authToken) {
+      this.buscarUsuarioLogado();
+    }
     this.buscarAnuncio(anuncioId);
-    this.usuarioLogado = !!sessionStorage.getItem("authToken");
   },
   mounted() {
     document.addEventListener("keydown", this.tecladoNavegacao);
@@ -170,13 +150,53 @@ export default {
     document.removeEventListener("keydown", this.tecladoNavegacao);
   },
   methods: {
+    async buscarUsuarioLogado() {
+      try {
+        const response = await usuarioApi.get("/logado", {
+          headers: { Authorization: `Basic ${this.authToken}` }
+        });
+        this.usuarioId = response.data.id;
+      } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+      }
+    },
+    async buscarAnuncio(id) {
+      try {
+        const response = await anuncioApi.get(`/${id}`);
+        this.anuncio = { ...response.data, favorito: false };
+        if (this.authToken && this.usuarioId) {
+          const favCheck = await favoritoApi.get(`/usuario/${this.usuarioId}/anuncio/${id}`);
+          this.anuncio.favorito = favCheck.data === true;
+        }
+      } catch (error) {
+        console.error("Erro ao buscar anúncio:", error);
+        alert("Erro ao carregar os detalhes do anúncio.");
+      }
+    },
+    async toggleFavorito() {
+      if (!this.authToken || !this.usuarioId) {
+        alert("Você precisa estar logado para favoritar um anúncio.");
+        return;
+      }
+      try {
+        if (this.anuncio.favorito) {
+          await favoritoApi.delete(`/usuario/${this.usuarioId}/anuncio/${this.anuncio.id}`);
+          this.anuncio.favorito = false;
+        } else {
+          await favoritoApi.post(`/usuario/${this.usuarioId}/anuncio/${this.anuncio.id}`);
+          this.anuncio.favorito = true;
+        }
+      } catch (error) {
+        console.error("Erro ao atualizar favorito:", error);
+        alert("Erro ao atualizar favorito. Verifique se o token de autenticação é válido.");
+      }
+    },
     async enviarDenuncia() {
       try {
         const payload = {
           ...this.denuncia,
           anuncio: { id: this.anuncio.id },
         };
-
         await denunciaApi.post("", payload);
         alert("Denúncia enviada com sucesso!");
         this.abrirModalDenuncia = false;
@@ -185,34 +205,6 @@ export default {
         console.error("Erro ao enviar denúncia:", error);
         alert("Erro ao enviar denúncia. Verifique os dados ou tente novamente.");
       }
-    },
-    async buscarAnuncio(id) {
-      try {
-        const response = await anuncioApi.get(`/${id}`);
-        const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
-        this.anuncio = {
-          ...response.data,
-          favorito: favoritos.includes(response.data.id)
-        };
-      } catch (error) {
-        console.error("Erro ao buscar anúcio:", error);
-        alert("Erro ao carregar os detalhes do anúcio.");
-      }
-    },
-    toggleFavorito() {
-      if (!this.usuarioLogado) {
-        alert("Você precisa estar logado para favoritar um anúcio.");
-        return;
-      }
-      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
-      if (this.anuncio.favorito) {
-        favoritos = favoritos.filter(id => id !== this.anuncio.id);
-        this.anuncio.favorito = false;
-      } else {
-        favoritos.push(this.anuncio.id);
-        this.anuncio.favorito = true;
-      }
-      localStorage.setItem("favoritos", JSON.stringify(favoritos));
     },
     imagemErro(event) {
       event.target.src = '/logos/logo_vitrinecar.png';

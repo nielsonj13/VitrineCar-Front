@@ -1,6 +1,8 @@
 <template>
   <div
-    v-if="mensagemAlerta" class="alert alert-danger alerta-sobreposto text-center" role="alert"
+    v-if="mensagemAlerta"
+    class="alert alert-danger alerta-sobreposto text-center"
+    role="alert"
   >
     <i class="bi bi-exclamation-triangle-fill me-2"></i>
     {{ mensagemAlerta }}
@@ -36,23 +38,17 @@
               required
             />
           </div>
+
           <p v-if="erro" class="erro-msg">⚠️ {{ erro }}</p>
+
           <div class="d-flex flex-column align-items-center mt-4 gap-2">
+            <button @click="login" class="btn-action entrar w-75">Entrar</button>
 
-            <!-- Botão "Entrar" com mais destaque central -->
-            <button @click="login" class="btn-action entrar w-75">
-              Entrar
-            </button>
-
-            <!-- Botões lado a lado -->
             <div class="d-flex justify-content-center gap-2 mt-2 w-75">
-
-              <!-- Botão "Criar Conta" (maior) -->
               <button @click="redirecionarParaCriar" class="btn-action criar flex-grow-1">
                 Criar Conta
               </button>
 
-              <!-- Botão "Voltar para a Página Inicial" (menor) -->
               <button @click="redirecionarInicial" class="btn-action inicial" style="min-width: 140px;">
                 <i class="bi bi-house-door-fill me-2"></i>
                 Voltar
@@ -83,8 +79,8 @@ export default {
       sessionStorage.removeItem("mensagemAlerta");
 
       setTimeout(() => {
-      this.mensagemAlerta = "";
-    }, 5000);
+        this.mensagemAlerta = "";
+      }, 5000);
     }
   },
   methods: {
@@ -93,7 +89,11 @@ export default {
       try {
         const token = btoa(`${this.username}:${this.password}`);
 
-        const res = await fetch("http://localhost:8080/anuncios", {
+        // Salva o token
+        sessionStorage.setItem("authToken", token);
+
+        // Busca o usuário logado autenticado
+        const res = await fetch("http://localhost:8080/usuarios/logado", {
           headers: {
             Authorization: `Basic ${token}`,
           },
@@ -103,11 +103,18 @@ export default {
           throw new Error("E-mail ou senha inválidos");
         }
 
-        
-        sessionStorage.setItem("authToken", token);
+        const usuario = await res.json();
+
+        // Salva o usuário logado
+        sessionStorage.setItem("usuario", JSON.stringify(usuario));
+
+        // Redireciona
         this.$router.push({ name: "TelaPrincipal" });
+
       } catch (err) {
         this.erro = err.message;
+        sessionStorage.removeItem("authToken");
+        sessionStorage.removeItem("usuario");
       }
     },
 
@@ -123,7 +130,6 @@ export default {
 </script>
 
 <style scoped>
-
 .alerta-sobreposto {
   position: absolute;
   top: 20px;
@@ -135,7 +141,6 @@ export default {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   font-size: 1.1rem;
 }
-
 
 .login-wrapper {
   display: flex;

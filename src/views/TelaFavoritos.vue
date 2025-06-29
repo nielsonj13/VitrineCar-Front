@@ -40,7 +40,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi } from "../Services/http.js";
+import favoritoService from "../Services/favoritoservice.js";
 
 export default {
   name: "TelaFavoritos",
@@ -48,42 +48,49 @@ export default {
   data() {
     return {
       favoritos: [],
+      usuarioId: null,
     };
   },
   methods: {
     async carregarFavoritos() {
-      const favoritosIds = JSON.parse(localStorage.getItem("favoritos") || "[]");
-
       try {
-        const response = await anuncioApi.get(""); // Busca todos os anúncios
-        this.favoritos = response.data
-          .filter(a => favoritosIds.includes(a.id))
-          .map(a => ({ ...a, favorito: true }));
+        const usuario = JSON.parse(sessionStorage.getItem("usuario"));
+        if (!usuario || !usuario.id) {
+          return;
+        }
+
+        this.usuarioId = usuario.id;
+
+        const response = await favoritoService.listarFavoritos(this.usuarioId);
+
+        // Mapeia os favoritos retornando apenas os dados do anúncio
+        this.favoritos = response.data.map(fav => ({
+          ...fav.anuncio,
+          favorito: true
+        }));
       } catch (error) {
-        console.error("Erro ao buscar anúncios favoritos:", error);
+        console.error("Erro ao buscar favoritos:", error);
       }
     },
 
-    toggleFavorito(anuncio) {
-      anuncio.favorito = !anuncio.favorito;
-      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
-
-      if (anuncio.favorito) {
-        favoritos.push(anuncio.id);
-      } else {
-        favoritos = favoritos.filter(id => id !== anuncio.id);
-        this.favoritos = this.favoritos.filter(a => a.id !== anuncio.id);
+    async toggleFavorito(anuncio) {
+      try {
+        if (anuncio.favorito) {
+          await favoritoService.desfavoritar(this.usuarioId, anuncio.id);
+          this.favoritos = this.favoritos.filter(a => a.id !== anuncio.id);
+        }
+      } catch (error) {
+        console.error("Erro ao desfavoritar:", error);
+        alert("Erro ao remover dos favoritos.");
       }
-
-      localStorage.setItem("favoritos", JSON.stringify(favoritos));
     },
 
     getImagem(anuncio) {
-      return anuncio.imagens?.[0] || '/logos/logo_vitrinecar.png';
+      return anuncio.imagens?.[0] || "/logos/logo_vitrinecar.png";
     },
 
     imagemErro(event) {
-      event.target.src = '/logos/logo_vitrinecar.png';
+      event.target.src = "/logos/logo_vitrinecar.png";
     },
 
     verAnuncio(anuncio) {

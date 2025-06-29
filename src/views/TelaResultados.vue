@@ -18,7 +18,7 @@
               <div class="title-container">
                 <h3>{{ anuncio.marca }} {{ anuncio.modelo }}</h3>
                 <i
-                  :class="getClasseFavorito(anuncio)"
+                  :class="anuncio.favorito ? 'bi bi-star-fill' : 'bi bi-star'"
                   class="favorite-icon"
                   @click="toggleFavorito(anuncio)"
                 ></i>
@@ -39,7 +39,7 @@
 
 <script>
 import Navbar from "../components/NavBar.vue";
-import { anuncioApi } from '../Services/http.js';
+import { anuncioApi, favoritoApi, usuarioApi } from "../Services/http.js";
 
 export default {
   name: "TelaResultados",
@@ -47,27 +47,53 @@ export default {
   data() {
     return {
       anuncios: [],
+      termo: this.$route.query.termo || "",
       logado: false,
-      termo: this.$route.query.termo || "",  // Captura o termo da busca
+      usuarioId: null,
     };
   },
   async created() {
     const token = sessionStorage.getItem("authToken");
     this.logado = !!token;
-    await this.buscarAnuncios();
+
+    if (this.logado) {
+      try {
+        const response = await usuarioApi.get("/logado", {
+          headers: { Authorization: `Basic ${token}` },
+        });
+        this.usuarioId = response.data.id;
+        await this.buscarAnuncios();
+        await this.marcarFavoritos();
+      } catch (err) {
+        console.error("Erro ao buscar usuário logado:", err);
+      }
+    } else {
+      await this.buscarAnuncios(); // Apenas carrega os anúncios
+    }
   },
   methods: {
     async buscarAnuncios() {
       try {
-        const response = await anuncioApi.get('/buscar', { params: { termo: this.termo.trim().toLowerCase() } });
-        const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
-
-        this.anuncios = response.data.map(anuncio => ({
-          ...anuncio,
-          favorito: favoritos.includes(anuncio.id)
-        }));
+        const response = await anuncioApi.get('/buscar', {
+          params: { termo: this.termo.trim().toLowerCase() }
+        });
+        this.anuncios = response.data.map(anuncio => ({ ...anuncio, favorito: false }));
       } catch (error) {
         console.error('Erro ao buscar anúncios:', error);
+      }
+    },
+
+    async marcarFavoritos() {
+      try {
+        const response = await favoritoApi.get(`/usuario/${this.usuarioId}`);
+        const favoritosIds = response.data.map(f => f.anuncio.id);
+
+        this.anuncios = this.anuncios.map(anuncio => ({
+          ...anuncio,
+          favorito: favoritosIds.includes(anuncio.id)
+        }));
+      } catch (error) {
+        console.error("Erro ao buscar favoritos:", error);
       }
     },
 
@@ -79,43 +105,30 @@ export default {
       event.target.src = '/logos/logo_vitrinecar.png';
     },
 
-    getClasseFavorito(anuncio) {
-      if (this.logado && anuncio.favorito) {
-        return "bi bi-star-fill";
-      } else {
-        return "bi bi-star";
-      }
-    },
-
-    toggleFavorito(anuncio) {
+    async toggleFavorito(anuncio) {
       if (!this.logado) {
         alert("Você precisa estar logado para favoritar um anúncio.");
         return;
       }
 
-      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+      try {
+        if (anuncio.favorito) {
+          await favoritoApi.delete(`/usuario/${this.usuarioId}/anuncio/${anuncio.id}`);
+          anuncio.favorito = false;
+        } else {
+          await favoritoApi.post(`/usuario/${this.usuarioId}/anuncio/${anuncio.id}`);
+          anuncio.favorito = true;
+        }
 
-      if (favoritos.includes(anuncio.id)) {
-        favoritos = favoritos.filter(id => id !== anuncio.id);
-        anuncio.favorito = false;
-      } else {
-        favoritos.push(anuncio.id);
-        anuncio.favorito = true;
+        this.anuncios = [...this.anuncios]; // Atualiza reatividade
+      } catch (error) {
+        console.error("Erro ao atualizar favorito:", error);
+        alert("Erro ao atualizar favorito. Verifique se o token está válido.");
       }
-
-      localStorage.setItem("favoritos", JSON.stringify(favoritos));
-
-      // Atualiza o array de anúncios para manter reatividade
-      this.anuncios = this.anuncios.map(a =>
-        a.id === anuncio.id ? { ...a, favorito: anuncio.favorito } : a
-      );
     },
 
     verAnuncio(anuncio) {
-      this.$router.push({ 
-        name: "TelaVeiculo", 
-        params: { id: anuncio.id }
-      });
+      this.$router.push({ name: "TelaVeiculo", params: { id: anuncio.id } });
     }
   }
 };

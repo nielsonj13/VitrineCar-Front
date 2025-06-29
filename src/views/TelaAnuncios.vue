@@ -40,6 +40,7 @@
 <script>
 import Navbar from "../components/NavBar.vue";
 import { anuncioApi } from '../Services/http.js';
+import favoritoService from '../Services/favoritoservice.js';
 
 export default {
   name: "TelaAnuncios",
@@ -47,26 +48,45 @@ export default {
   data() {
     return {
       anuncios: [],
-      logado: false
+      logado: false,
+      usuarioId: null
     };
   },
   async created() {
     const token = sessionStorage.getItem("authToken");
     this.logado = !!token;
+
+    const usuario = JSON.parse(sessionStorage.getItem("usuario"));
+    if (usuario && usuario.id) {
+      this.usuarioId = usuario.id;
+    }
+
     await this.buscarAnuncios();
   },
   methods: {
     async buscarAnuncios() {
       try {
         const response = await anuncioApi.get('');
-        const favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+        const anuncios = response.data;
 
-        this.anuncios = response.data.map(anuncio => ({
+        let favoritosIds = [];
+
+        if (this.usuarioId) {
+          try {
+            const favoritosResponse = await favoritoService.listarFavoritos(this.usuarioId);
+            favoritosIds = favoritosResponse.data.map(f => f.anuncio.id);
+          } catch (e) {
+            console.warn("Não foi possível carregar favoritos, mas os anúncios foram carregados.");
+          }
+        }
+
+        this.anuncios = anuncios.map(anuncio => ({
           ...anuncio,
-          favorito: favoritos.includes(anuncio.id)
+          favorito: favoritosIds.includes(anuncio.id)
         }));
       } catch (error) {
         console.error('Erro ao buscar anúncios:', error);
+        alert("Erro ao carregar anúncios.");
       }
     },
 
@@ -86,28 +106,28 @@ export default {
       }
     },
 
-    toggleFavorito(anuncio) {
-      if (!this.logado) {
+    async toggleFavorito(anuncio) {
+      if (!this.logado || !this.usuarioId) {
         alert("Você precisa estar logado para favoritar um anúncio.");
         return;
       }
 
-      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
+      try {
+        if (anuncio.favorito) {
+          await favoritoService.desfavoritar(this.usuarioId, anuncio.id);
+          anuncio.favorito = false;
+        } else {
+          await favoritoService.favoritar(this.usuarioId, anuncio.id);
+          anuncio.favorito = true;
+        }
 
-      if (favoritos.includes(anuncio.id)) {
-        favoritos = favoritos.filter(id => id !== anuncio.id);
-        anuncio.favorito = false;
-      } else {
-        favoritos.push(anuncio.id);
-        anuncio.favorito = true;
+        this.anuncios = this.anuncios.map(a =>
+          a.id === anuncio.id ? { ...a, favorito: anuncio.favorito } : a
+        );
+      } catch (error) {
+        console.error("Erro ao atualizar favorito:", error);
+        alert("Erro ao atualizar favorito.");
       }
-
-      localStorage.setItem("favoritos", JSON.stringify(favoritos));
-
-      // Atualiza o array de anúncios para manter reatividade
-      this.anuncios = this.anuncios.map(a =>
-        a.id === anuncio.id ? { ...a, favorito: anuncio.favorito } : a
-      );
     },
 
     verAnuncio(anuncio) {

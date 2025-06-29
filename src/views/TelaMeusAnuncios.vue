@@ -49,6 +49,17 @@
 <script>
 import Navbar from "../components/NavBar.vue";
 import { anuncioApi, usuarioApi } from "../Services/http.js";
+import axios from "axios";
+
+const favoritoApi = axios.create({
+  baseURL: "http://localhost:8080/favoritos",
+  headers: { "Content-Type": "application/json" },
+});
+favoritoApi.interceptors.request.use(config => {
+  const token = sessionStorage.getItem("authToken");
+  if (token) config.headers.Authorization = `Basic ${token}`;
+  return config;
+});
 
 export default {
   name: "TelaMeusAnuncios",
@@ -63,7 +74,7 @@ export default {
     async buscarUsuarioLogado() {
       const authToken = sessionStorage.getItem("authToken");
       if (!authToken) {
-        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a página meus anuncios.");
+        sessionStorage.setItem("mensagemAlerta", "Você precisa estar logado para acessar a página meus anúncios.");
         this.$router.push({ name: "TelaLogin" });
         return;
       }
@@ -83,10 +94,14 @@ export default {
 
     async buscarAnunciosUsuario() {
       try {
-        const response = await anuncioApi.get(`/usuario/${this.usuarioId}`);
-        const favoritosIds = JSON.parse(localStorage.getItem("favoritos") || "[]");
+        const [anunciosRes, favoritosRes] = await Promise.all([
+          anuncioApi.get(`/usuario/${this.usuarioId}`),
+          favoritoApi.get(`/usuario/${this.usuarioId}`),
+        ]);
 
-        this.anuncios = response.data.map(anuncio => ({
+        const favoritosIds = favoritosRes.data.map(f => f.anuncio.id);
+
+        this.anuncios = anunciosRes.data.map(anuncio => ({
           ...anuncio,
           favorito: favoritosIds.includes(anuncio.id),
         }));
@@ -96,25 +111,29 @@ export default {
       }
     },
 
+    async toggleFavorito(anuncio) {
+      try {
+        if (anuncio.favorito) {
+          await favoritoApi.delete(`/usuario/${this.usuarioId}/anuncio/${anuncio.id}`);
+          anuncio.favorito = false;
+        } else {
+          await favoritoApi.post(`/usuario/${this.usuarioId}/anuncio/${anuncio.id}`);
+          anuncio.favorito = true;
+        }
+
+        this.anuncios = [...this.anuncios];
+      } catch (error) {
+        console.error("Erro ao atualizar favorito:", error);
+        alert("Erro ao atualizar favorito. Verifique se está logado.");
+      }
+    },
+
     getImagem(anuncio) {
       return anuncio.imagens?.[0] || '/logos/logo_vitrinecar.png';
     },
 
     imagemErro(event) {
       event.target.src = '/logos/logo_vitrinecar.png';
-    },
-
-    toggleFavorito(anuncio) {
-      anuncio.favorito = !anuncio.favorito;
-      let favoritos = JSON.parse(localStorage.getItem("favoritos") || "[]");
-
-      if (anuncio.favorito) {
-        favoritos.push(anuncio.id);
-      } else {
-        favoritos = favoritos.filter(id => id !== anuncio.id);
-      }
-
-      localStorage.setItem("favoritos", JSON.stringify(favoritos));
     },
 
     verAnuncio(anuncio) {
@@ -153,7 +172,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 /* Estilo similar ao da tela de anúncios */
